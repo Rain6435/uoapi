@@ -156,10 +156,11 @@ class TestCarletonIntegration:
     @pytest.mark.integration
     def test_cli_integration(self):
         """Test CLI integration with Carleton module."""
-        # Test that the module can be imported
-        from uoapi.carleton import cli
-        assert hasattr(cli, 'parser')
-        assert hasattr(cli, 'cli')
+        # Test that CLI functions can be imported from carleton package
+        from uoapi.carleton import cli, parser
+        # Check that functions exist and are callable
+        assert callable(cli)
+        assert callable(parser)
 
     @pytest.mark.integration
     def test_discovery_class_exists(self):
