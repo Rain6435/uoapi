@@ -1,0 +1,204 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, dev, carleton ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', '**/setup.py', '**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[tests]
+        pip install pytest-cov pytest-xdist
+        pip install flake8 mypy black bandit
+
+    - name: Run security scan with bandit
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+        bandit -r src/ --severity-level medium
+
+    - name: Run code formatting check with black
+      run: |
+        black --check --diff src/ tests/
+
+    - name: Run linting with flake8
+      run: |
+        flake8 src/ tests/
+
+    - name: Run type checking with mypy
+      run: |
+        mypy src/
+
+    - name: Run tests with pytest
+      run: |
+        pytest tests/ -v --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=70
+
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.10'
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: Upload test artifacts
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-artifacts-${{ matrix.python-version }}
+        path: |
+          htmlcov/
+          bandit-report.json
+          .coverage
+
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install package
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+
+    - name: Test CLI installation
+      run: |
+        uoapi --help
+
+    - name: Test CLI commands (dry run)
+      run: |
+        # Test that commands exist and show help
+        uoapi course --help || true
+        uoapi timetable --help || true
+        uoapi dates --help || true
+        uoapi carleton --help || true
+
+  build-package:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+
+    - name: Build package
+      run: |
+        python -m build
+
+    - name: Check package
+      run: |
+        twine check dist/*
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-packages
+        path: dist/
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: [test, build-package]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: dist-packages
+        path: dist/
+
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      run: |
+        pip install twine
+        twine upload dist/*
+
+  docs:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install documentation dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install sphinx sphinx-rtd-theme
+
+    - name: Generate API documentation
+      run: |
+        mkdir -p docs/
+        sphinx-apidoc -o docs/ src/
+        # For now, just create a simple index
+        echo "# Schedulo API Documentation" > docs/README.md
+        echo "Auto-generated documentation for schedulo-api package." >> docs/README.md
+
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs

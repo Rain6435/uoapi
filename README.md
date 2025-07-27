@@ -88,6 +88,130 @@ make check   # Run type checking with mypy
 make lint    # Run code linting with flake8
 ```
 
+## Data Structures and Entities
+
+### University of Ottawa Models
+
+#### Subject
+Represents academic departments/subjects:
+```python
+{
+    "subject": "Computer Science",           # Full department name
+    "subject_code": "CSI",                 # Short identifier
+    "link": "https://catalogue.uottawa.ca/en/courses/csi/"
+}
+```
+
+#### Course
+Complete course information:
+```python
+{
+    "course_code": "CSI3140",              # Course identifier
+    "title": "World Wide Web Programming", # Course title
+    "credits": 3,                          # Academic credits
+    "description": "Introduction to...",   # Full description
+    "components": ["LECTURE", "LAB"],      # Course delivery methods
+    "prerequisites": "CSI2520, CSI2101",  # Raw prerequisite text
+    "dependencies": [["CSI2520"], ["CSI2101"]]  # Parsed dependencies
+}
+```
+
+### Carleton University Models
+
+#### Course Section
+Individual course section with scheduling:
+```python
+{
+    "crn": "12345",                        # Course reference number
+    "section": "A",                        # Section identifier
+    "status": "Open",                      # Enrollment status
+    "credits": 0.5,                        # Course credits
+    "schedule_type": "Lecture",            # Delivery method
+    "instructor": "Dr. Smith",             # Instructor name
+    "meeting_times": [                     # Schedule information
+        {
+            "start_date": "2024-01-08",
+            "end_date": "2024-04-05", 
+            "days": "MWF",
+            "start_time": "10:05",
+            "end_time": "11:25"
+        }
+    ],
+    "notes": ["Additional requirements"]
+}
+```
+
+#### Complete Course
+Full course with all sections:
+```python
+{
+    "course_code": "COMP1405",             # Full course code
+    "subject_code": "COMP",               # Subject prefix
+    "course_number": "1405",              # Course number
+    "catalog_title": "Introduction to...", # Official title
+    "catalog_credits": 0.5,               # Credit value
+    "is_offered": true,                   # Availability status
+    "sections_found": 3,                  # Number of sections
+    "banner_title": "Intro Computer Programming", 
+    "banner_credits": 0.5,
+    "sections": [...],                    # Array of CourseSection objects
+    "error": false,
+    "error_message": ""
+}
+```
+
+#### Term Result
+Complete term discovery results:
+```python
+{
+    "term_code": "202401",                # Term identifier
+    "term_name": "Winter 2024",          # Human-readable term
+    "session_id": "abc123",              # Session identifier
+    "total_subjects_available": 45,       # Total subjects
+    "subjects_tested": 45,               # Subjects processed
+    "total_courses_tested": 2847,        # Courses checked
+    "courses_offered": 1923,             # Available courses
+    "errors": 12,                        # Processing errors
+    "processing_time_seconds": 324.5,    # Execution time
+    "offering_rate_percent": 67.5,       # Availability rate
+    "subject_statistics": {...},         # Per-subject stats
+    "courses": [...],                    # Array of Course objects
+    "processed_at": "2024-01-15T10:30:00Z"
+}
+```
+
+### Common Output Format
+
+All commands return structured JSON:
+```python
+{
+    "data": {                            # Main response data
+        "subjects": [...],               # or "courses", "dates", etc.
+    },
+    "messages": [                        # Status/error messages
+        "Successfully retrieved 45 subjects"
+    ]
+}
+```
+
+### Prerequisites and Dependencies
+
+#### Raw Prerequisites
+Text as scraped from university catalogs:
+- University of Ottawa: `"Prerequisite: CSI2520, CSI2101"`
+- Carleton: Usually embedded in course descriptions
+
+#### Parsed Dependencies  
+Structured prerequisite relationships:
+```python
+{
+    "dependencies": [
+        ["CSI2520"],                     # Required course
+        ["CSI2101", "CSI2110"]          # Alternative courses (OR relationship)
+    ]
+}
+```
+
 ## What's New in This Fork
 
 - **Complete Carleton University integration**
