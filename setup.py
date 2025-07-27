@@ -10,11 +10,11 @@ from setuptools import find_packages, setup
 here = os.path.abspath(os.path.dirname(__file__))
 
 # Package meta-data.
-NAME = "uoapi"
-DESCRIPTION = "An API for retrieving public data from the University of Ottawa."
-URL = "https://github.com/andrewnags/uoapi"
-EMAIL = "anaga042@uottawa.ca"
-AUTHOR = "Andrew Nagarajah"
+NAME = "schedulo-api"
+DESCRIPTION = "An API for retrieving public data from the University of Ottawa and Carleton University."
+URL = "https://github.com/Rain6435/uoapi"
+EMAIL = "brosimo@outlook.fr"
+AUTHOR = "Mohammed Elhasnaoui"
 REQUIRES_PYTHON = ">=3.10.0"
 with io.open(os.path.join(here, "src/uoapi", "__version__.py")) as f:
     m = re.search("__version__\\s*=\\s*['\"]([^'\"]+)['\"]", f.read())
@@ -75,7 +75,6 @@ setup(
     entry_points={
         "console_scripts": ["uoapi=uoapi.cli:cli"],
     },
-    inclue_package_data=True,
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
@@ -93,10 +92,9 @@ setup(
         "Operating System :: POSIX",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Education",
         "Topic :: Internet :: WWW/HTTP :: Indexing/Search",

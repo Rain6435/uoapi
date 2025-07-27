@@ -1,8 +1,17 @@
+"""
+Main CLI entry point for the uoapi (Schedulo API) application.
+
+This module provides the main command-line interface for accessing
+University of Ottawa and Carleton University course data. It dynamically
+loads and configures subcommands from various university modules.
+"""
+
 import os
 import argparse
 import itertools as it
 import functools as ft
 from importlib import import_module
+from typing import List
 
 from uoapi.cli_tools import absolute_path, default_parser, noop, make_cli
 from uoapi.log_config import configure_parser, configure_logging
@@ -22,7 +31,20 @@ with open(absolute_path("__modules__"), "r") as f:
 #               GLOBAL PARSER AND CLI
 ###############################################################################
 
-def uoapi_parser():
+def uoapi_parser() -> argparse.ArgumentParser:
+    """
+    Create and configure the main argument parser for uoapi.
+    
+    This function dynamically loads all available university modules
+    and creates subcommands for each one. Each module should provide
+    a parser function and cli function for integration.
+    
+    Returns:
+        argparse.ArgumentParser: Configured parser with all subcommands
+        
+    Raises:
+        ImportError: If a module listed in __modules__ cannot be imported
+    """
     parser = argparse.ArgumentParser()
 
     # Global arguments
@@ -51,7 +73,16 @@ def uoapi_parser():
     return parser
 
 @make_cli(uoapi_parser)
-def cli(args=None):
+def cli(args=None) -> None:
+    """
+    Main CLI entry point for the schedulo-api application.
+    
+    This function is called when the user runs the `uoapi` command.
+    It configures logging and delegates to the appropriate subcommand.
+    
+    Args:
+        args: Command line arguments (defaults to sys.argv if None)
+    """
     configure_logging(args)
     args.func(args)
 

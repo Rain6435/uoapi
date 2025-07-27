@@ -1,26 +1,32 @@
-from bs4 import (
-    Tag,
-    NavigableString,
-)
+"""
+HTML parsing utilities for University of Ottawa course data.
 
-from uoapi.course import (
-    utils,
-    patterns as pt,
-)
-from uoapi.course.models import (
-    Subject,
-    Prerequisite,
-    Component,
-)
+This module provides functions to extract course information from
+HTML pages scraped from the University of Ottawa course catalog.
+"""
 
-from typing import (
-    cast,
-)
+from typing import cast, Tuple, List, Union
+from bs4 import Tag, NavigableString
+
+from uoapi.course import utils, patterns as pt
+from uoapi.course.models import Subject, Prerequisite, Component
 
 
-def title_tag(tag: Tag | NavigableString) -> tuple[str, str, int]:
+def title_tag(tag: Union[Tag, NavigableString]) -> Tuple[str, str, int]:
     """
-    Extracts course code, title, and credits from a courseblocktitle tag
+    Extract course code, title, and credits from a course block title tag.
+    
+    Args:
+        tag: BeautifulSoup tag containing course title information
+        
+    Returns:
+        Tuple of (course_code, title, credits)
+        
+    Example:
+        >>> tag = Tag(name='div')
+        >>> tag.string = "CSI3140 World Wide Web Programming (3 credits)"
+        >>> title_tag(tag)
+        ('CSI3140', 'World Wide Web Programming', 3)
     """
     title = utils.replace_special_spaces(tag.text)
 

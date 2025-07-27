@@ -1,7 +1,16 @@
+"""
+CLI interface for University of Ottawa course information.
+
+This module provides command-line access to course and subject data
+from the University of Ottawa course catalog. Users can query subjects,
+courses, or both with various filtering options.
+"""
+
 import sys
 import time
 import json
 import argparse
+from typing import List, Dict, Any
 
 from uoapi.cli_tools import make_parser, make_cli
 from uoapi.course import scrape_subjects, get_courses

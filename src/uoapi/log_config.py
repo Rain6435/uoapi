@@ -1,12 +1,21 @@
+"""
+Logging configuration and utilities for the uoapi application.
+
+This module provides standardized logging configuration with optional
+color support, file logging, and command-line argument integration.
+"""
+
 import logging
 import logging.handlers
-logging.getLogger(__name__)
-import os, time
+import os
+import time
 import traceback as tb
 import argparse
 import json
-
 from copy import copy
+from typing import Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 FORMAT_NO_COLOURS = {
     "CRITICAL":"CRITICAL",

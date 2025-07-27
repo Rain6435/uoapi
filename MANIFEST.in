@@ -1,1 +1,9 @@
+include README.md
+include COPYING
+include COPYING.LESSER
+include CLAUDE.md
 graft src
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+prune assets/
