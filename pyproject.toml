@@ -9,10 +9,10 @@ description = "An API for retrieving public data from the University of Ottawa a
 readme = "README.md"
 license = {text = "LGPL-3.0-or-later"}
 authors = [
-    {name = "Andrew Nagarajah", email = "anaga042@uottawa.ca"},
+    {name = "Mohammed Elhasnaoui", email = "brosimo@outlook.fr"},
 ]
 maintainers = [
-    {name = "Andrew Nagarajah", email = "anaga042@uottawa.ca"},
+    {name = "Mohammed Elhasnaoui", email = "brosimo@outlook.fr"},
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

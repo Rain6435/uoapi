@@ -11,10 +11,10 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 # Package meta-data.
 NAME = "uoapi"
-DESCRIPTION = "An API for retrieving public data from the University of Ottawa."
+DESCRIPTION = "An API for retrieving public data from the University of Ottawa and Carleton University."
 URL = "https://github.com/andrewnags/uoapi"
-EMAIL = "anaga042@uottawa.ca"
-AUTHOR = "Andrew Nagarajah"
+EMAIL = "brosimo@outlook.fr"
+AUTHOR = "Mohammed Elhasnaoui"
 REQUIRES_PYTHON = ">=3.10.0"
 with io.open(os.path.join(here, "src/uoapi", "__version__.py")) as f:
     m = re.search("__version__\\s*=\\s*['\"]([^'\"]+)['\"]", f.read())
