@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uoapi"
+dynamic = ["version"]
+description = "An API for retrieving public data from the University of Ottawa and Carleton University."
+readme = "README.md"
+license = {text = "LGPL-3.0-or-later"}
+authors = [
+    {name = "Andrew Nagarajah", email = "anaga042@uottawa.ca"},
+]
+maintainers = [
+    {name = "Andrew Nagarajah", email = "anaga042@uottawa.ca"},
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Natural Language :: English",
+    "Natural Language :: French",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Education",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+]
+keywords = ["university", "ottawa", "carleton", "courses", "api", "scraping", "education"]
+requires-python = ">=3.10"
+dependencies = [
+    "requests",
+    "regex",
+    "bs4",
+    "lxml",
+    "pandas",
+    "parsedatetime",
+    "pydantic<2",
+]
+
+[project.optional-dependencies]
+tests = [
+    "pytest",
+    "pytest-cov",
+    "httmock",
+    "mypy",
+    "flake8",
+    "black",
+    "bandit",
+    "types-requests",
+]
+
+[project.urls]
+Homepage = "https://github.com/andrewnags/uoapi"
+Repository = "https://github.com/andrewnags/uoapi"
+Issues = "https://github.com/andrewnags/uoapi/issues"
+
+[project.scripts]
+uoapi = "uoapi.cli:cli"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "uoapi.__version__.__version__"}
+
+[tool.setuptools.package-data]
+"*" = ["*.txt", "*.md"]
