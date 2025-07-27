@@ -57,9 +57,13 @@ tests = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/andrewnags/uoapi"
-Repository = "https://github.com/andrewnags/uoapi"
-Issues = "https://github.com/andrewnags/uoapi/issues"
+Homepage = "https://github.com/Rain6435/uoapi"
+Repository = "https://github.com/Rain6435/uoapi"
+Issues = "https://github.com/Rain6435/uoapi/issues"
+Documentation = "https://github.com/Rain6435/uoapi#readme"
+"Source Code" = "https://github.com/Rain6435/uoapi"
+"Bug Reports" = "https://github.com/Rain6435/uoapi/issues"
+"Release Notes" = "https://github.com/Rain6435/uoapi/releases"
 
 [project.scripts]
 uoapi = "uoapi.cli:cli"
