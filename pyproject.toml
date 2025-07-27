@@ -3,7 +3,7 @@ requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "uoapi"
+name = "schedulo-api"
 dynamic = ["version"]
 description = "An API for retrieving public data from the University of Ottawa and Carleton University."
 readme = "README.md"

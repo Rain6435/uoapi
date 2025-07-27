@@ -1,10 +1,10 @@
-# uO API (Extended)
+# Schedulo API
 
 A Python CLI tool for retrieving public data from Canadian universities, including the University of Ottawa and Carleton University.
 
 **This is a fork of [andrewnags/uoapi](https://github.com/andrewnags/uoapi) with added support for Carleton University.**
 
-[![PyPI version](https://badge.fury.io/py/uoapi.svg)](https://badge.fury.io/py/uoapi)
+[![PyPI version](https://badge.fury.io/py/schedulo-api.svg)](https://badge.fury.io/py/schedulo-api)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
 ## Features
@@ -18,7 +18,7 @@ A Python CLI tool for retrieving public data from Canadian universities, includi
 
 Install from PyPI:
 ```bash
-pip install uoapi
+pip install schedulo-api
 ```
 
 Or install from source:

@@ -10,7 +10,7 @@ from setuptools import find_packages, setup
 here = os.path.abspath(os.path.dirname(__file__))
 
 # Package meta-data.
-NAME = "uoapi"
+NAME = "schedulo-api"
 DESCRIPTION = "An API for retrieving public data from the University of Ottawa and Carleton University."
 URL = "https://github.com/andrewnags/uoapi"
 EMAIL = "brosimo@outlook.fr"
