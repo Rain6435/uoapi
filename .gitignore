@@ -145,3 +145,6 @@ tags
 TAGS
 
 .vscode/
+
+# Assets folder - contains generated data files and logs
+assets/
