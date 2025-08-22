@@ -32,6 +32,7 @@ REQUIRED = [
     "pandas",
     "parsedatetime",
     "pydantic<2",
+    "RateMyProfessorAPI",
 ]
 
 # What packages are optional?

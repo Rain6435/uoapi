@@ -10,6 +10,7 @@ import regex as re
 from uoapi import __version__
 from uoapi.cli_tools import make_parser, make_cli
 from uoapi.timetable import query_timetable as qt
+from uoapi.rmp import inject_ratings_into_timetable
 
 help = "A tool for querying the timetables of courses in a term"
 description = ("You can query course codes like `MAT 3143`, "
@@ -80,6 +81,17 @@ def parser(default):
         default=2,
         help="how many times to try and connect to the server",
     )
+    default.add_argument("--include-ratings",
+        action="store_true",
+        default=False,
+        help="include Rate My Professor ratings for instructors",
+    )
+    default.add_argument("--school",
+        action="store",
+        required=True,
+        choices=["University of Ottawa", "Carleton University", "uottawa", "carleton"],
+        help="school name for rating lookup (required)",
+    )
     return default
 
 def get_subj_code(arg):
@@ -119,6 +131,7 @@ def cli(args=None):
         for out in main(
             args.courses, args.year, args.term, 
             args.saveraw, args.refresh, args.retries, args.waittime,
+            args.include_ratings, args.school,
         ):
             print(json.dumps(out))
 
@@ -145,7 +158,11 @@ def available(retries=2):
             }],
         }
 
-def main(courses, year, term, saveraw=None, refresh=5, retries=2, waittime=2):
+def main(courses, year, term, saveraw=None, refresh=5, retries=2, 
+         waittime=2, include_ratings=False, school=None):
+    if school is None:
+        raise ValueError("School parameter is required")
+    
     if saveraw is not None and os.path.isdir(saveraw):
         saveraw = os.path.join(saveraw, __version__, str(year), str(term))
         os.makedirs(
@@ -193,10 +210,26 @@ def main(courses, year, term, saveraw=None, refresh=5, retries=2, waittime=2):
                         }
                     else:
                         logging.info("Parsed data for {} {}, {}{}".format(term, year, subj, code))
-                yield {
+                
+                # Prepare output data
+                output_data = {
                     "timetables": out,
                     "messages": msgs,
                 }
+                
+                # Inject ratings if requested
+                if include_ratings:
+                    try:
+                        output_data = inject_ratings_into_timetable(output_data, school)
+                    except Exception as e:
+                        logging.warning(f"Failed to inject ratings: {e}")
+                        # Add a message about the rating failure
+                        output_data["messages"].append({
+                            "type": "warning",
+                            "message": f"Failed to add instructor ratings: {e}",
+                        })
+                
+                yield output_data
             time.sleep(waittime)
     yield {
         "messages": gm
