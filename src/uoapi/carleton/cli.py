@@ -251,7 +251,7 @@ def cli(args=None):
                     "type": "info",
                     "message": (
                         f"Found {len(offered_courses)}/{len(courses)} courses offered "
-                        f"({len(offered_courses)/max(1,len(courses))*100:.1f}%)"
+                        f"({len(offered_courses) / max(1, len(courses)) * 100:.1f}%)"
                     ),
                 }
             )
