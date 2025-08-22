@@ -105,5 +105,5 @@ def extract_important_dates(text):
             }
 
 def scrape_dates(url=url):
-    page = requests.get(url).text
+    page = requests.get(url, timeout=30).text
     yield from extract_important_dates(page)
