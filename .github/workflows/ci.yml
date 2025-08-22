@@ -43,7 +43,7 @@ jobs:
 
     - name: Run code formatting check with black
       run: |
-        black --check --diff src/ tests/
+        black --check --diff --line-length=100 src/ tests/
 
     - name: Run linting with flake8
       run: |
