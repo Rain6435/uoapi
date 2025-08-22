@@ -54,7 +54,7 @@ To add support for a new university, create a new module following the establish
 3. **CLI Integration**:
    Your module must export these in `__init__.py`:
    - `parser` - CLI argument parser function
-   - `cli` - CLI execution function  
+   - `cli` - CLI execution function
    - `help` - Short help text
    - `description` - Detailed description
    - `epilog` - Usage examples

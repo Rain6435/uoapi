@@ -5,12 +5,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <script language='JavaScript'>
-var  totalTimeoutMilliseconds = 2073600000; 
-var  warningTimeoutMilliseconds = 2073600000; 
+var  totalTimeoutMilliseconds = 2073600000;
+var  warningTimeoutMilliseconds = 2073600000;
 var timeOutURL = 'https://uocampus.public.uottawa.ca/psc/csprpr9pub/EMPLOYEE/SA/?cmd=expire';
 var timeoutWarningPageURL = 'https://uocampus.public.uottawa.ca/psc/csprpr9pub/EMPLOYEE/SA/s/WEBLIB_TIMEOUT.PT_TIMEOUTWARNING.FieldFormula.IScript_TIMEOUTWARNING';
 var sRCRequestURL = 'https://uocampus.public.uottawa.ca/psc/csprpr9pub/EMPLOYEE/SA/s/WEBLIB_PTRC.ISCRIPT1.FieldFormula.IScript_RC_REQUEST';
-</script> 
+</script>
 
 <link id=PSSTYLEREQ_7_css rel='stylesheet' type='text/css' href='/cs/csprpr9pub/cache/PSSTYLEREQ_7.css' />
 <link id=SSS_STYLESHEET_1_css rel='stylesheet' type='text/css' href='/cs/csprpr9pub/cache/SSS_STYLESHEET_1.css' />
@@ -115,7 +115,7 @@ preSubmitProcess_win0(form, id);
 var spellcheckpos = id.indexOf('$spellcheck');
 if ((spellcheckpos != -1) && (id.indexOf('#KEYA5') != -1))
 	form.ICAction.value = id.substring(0,spellcheckpos);
-else 
+else
 	form.ICAction.value=id;
 var actionName = form.ICAction.value;
 form.ICXPos.value=ptCommonObj2.getScrollX();
@@ -157,7 +157,7 @@ this.pt_daystitle_t4 = "/cs/csprpr9pub/cache/PT_DATE_TITLE_T4_1.GIF";
 this.pt_daystitle_f5 = "/cs/csprpr9pub/cache/PT_DATE_TITLE_F5_1.gif";
 this.pt_daystitle_s6 = "/cs/csprpr9pub/cache/PT_DATE_TITLE_S6_1.GIF";
 }
- 
+
 function LoadCalendar()
 {
 var dateitems = new dateitemrefs();
@@ -321,13 +321,13 @@ label[for='#ICDataLang']
 var intv = setInterval( function() {
    var i = 1;
    var l = document.getElementById('#ICDataLang');
-   if(l) { 
+   if(l) {
           var lng = 'CFR';
-          if(document.querySelector("label[for='#ICDataLang']").innerText.indexOf('Data') > -1) { 
+          if(document.querySelector("label[for='#ICDataLang']").innerText.indexOf('Data') > -1) {
              lng = 'ENG';
           }
-          i = 0; 					
-          if(l.value != lng) {				                        l.value = lng;					              l.onchange();  
+          i = 0;
+          if(l.value != lng) {				                        l.value = lng;					              l.onchange();
           }
    } else { i++; }
    if(i == 0 || i > 120) {clearInterval(intv);}

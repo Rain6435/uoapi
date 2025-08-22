@@ -60,6 +60,6 @@ jobs:
                 exclude: "src/uoapi/(rmp/rate_my_prof|timetable/query_timetable|course/course_info|dates/important_dates).py"
         EOF
         fi
-        
+
         pre-commit install
         pre-commit run --all-files
