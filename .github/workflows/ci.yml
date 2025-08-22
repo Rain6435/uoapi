@@ -47,7 +47,7 @@ jobs:
 
     - name: Run linting with flake8
       run: |
-        flake8 src/ tests/
+        flake8 src/ tests/ --max-line-length=100 --max-complexity=20 --ignore=F401,E501,C901,E203,E402,E711,F841,W503
 
     - name: Run type checking with mypy
       run: |

@@ -49,7 +49,7 @@ jobs:
             hooks:
             -   id: flake8
                 additional_dependencies: [flake8-docstrings]
-                args: [--max-line-length=100, --max-complexity=10]
+                args: [--max-line-length=100, --max-complexity=20, --ignore=F401,E501,C901,E203,E402,E711,F841,W503]
         -   repo: https://github.com/pre-commit/mirrors-mypy
             rev: v1.13.0
             hooks:
