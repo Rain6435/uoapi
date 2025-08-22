@@ -53,6 +53,7 @@ default_headers = (("Content-Type", "application/x-www-form-urlencoded"),)
 
 
 class ErrorMessenger:
+    """Helper class for managing error messages and logging."""
 
     def __init__(
         self,
@@ -71,6 +72,7 @@ class ErrorMessenger:
         self.raise_ = raise_
 
     def __call__(self, err_type: str, message: str, **kwargs):
+        """Log and store an error message."""
         if len(self.prefix) > 0:
             message = "{}: {}".format(self.prefix, message)
         self.msg_list.append({"type": err_type, "message": message, **kwargs})
@@ -119,6 +121,7 @@ def require_context(method):
 
 
 class TimetableQuery:
+    """Main class for querying University of Ottawa timetable data."""
 
     def __init__(
         self,
@@ -155,6 +158,7 @@ class TimetableQuery:
     # Setup methods
 
     def __enter__(self):
+        """Enter the context manager and initialize the session."""
         if self.session is not None:
             raise Exception("Cannot enter this context manager if already successfully entered")
         self.session = requests.Session()
@@ -165,6 +169,7 @@ class TimetableQuery:
         return messages
 
     def __exit__(self, excp, value, traceback):
+        """Exit the context manager and cleanup resources."""
         if getattr(self, "session", None) is not None:
             self.session.close()
         self.session = self.messages = None
@@ -174,6 +179,7 @@ class TimetableQuery:
 
     @require_context
     def refresh(self):
+        """Refresh the timetable session and get available terms."""
         em = ErrorMessenger(self.messages, log=self.log)
         success, response = make_request(
             self.session.get,
@@ -209,6 +215,7 @@ class TimetableQuery:
 
     @staticmethod
     def get_hidden_inputs(text: Union[str, bytes]) -> Optional[dict]:
+        """Extract hidden form inputs from HTML response."""
         # Check if page is as expected
         msg = BeautifulSoup(text, "lxml").find(
             lambda x: search_tag(x, "div", "id", "win0divDERIVED_CLSRCH_SSR_CLASS_LBLlbl")
@@ -219,6 +226,7 @@ class TimetableQuery:
         return BeautifulSoup(text, "html.parser").find_all("input", type="hidden")
 
     def update_form(self, new_form: dict) -> dict:
+        """Update the form with new hidden inputs."""
         new_form = {x["id"]: x["value"] for x in new_form}
         self.form.update({x: y for x, y in new_form.items() if y.strip() != ""})
         self.form["ICAction"] = "CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH"
@@ -228,6 +236,7 @@ class TimetableQuery:
 
     @staticmethod
     def find_available(response: Union[str, bytes]) -> dict:
+        """Find available terms from the response."""
         options = BeautifulSoup(response, "lxml").find_all(
             lambda x: search_tag(x, "select", "id", r"CLASS_SRCH_WRK2_STRM\$35\$")
         )

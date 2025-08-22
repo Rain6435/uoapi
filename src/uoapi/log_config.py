@@ -61,6 +61,7 @@ class ColouredFormatter(logging.Formatter):
         self.use_colour = USE_COLOUR and use_colour
 
     def format(self, record):
+        """Format a log record with optional color formatting."""
         record = copy(record)
         if record.levelname in FORMAT_COLOURS:
             if self.use_colour:
@@ -76,8 +77,10 @@ class ColouredFormatter(logging.Formatter):
 
 
 class ExceptionTracebackFormatter(logging.Formatter):
+    """Formatter that handles exception tracebacks in JSON format."""
 
     def format(self, record):
+        """Format a log record with exception information in JSON format."""
         record = copy(record)
         if record.exc_info is not None:
             info = record.exc_info
@@ -94,6 +97,7 @@ class ExceptionTracebackFormatter(logging.Formatter):
         return super().format(record)
 
     def formatException(self, exc_info=None):
+        """Return empty string to suppress default exception formatting."""
         return ""
 
 

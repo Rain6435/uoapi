@@ -17,6 +17,7 @@ def absolute_path(path):
 
 
 class MockServer:
+    """Mock server for testing timetable queries."""
 
     def __init__(self):
         # Loading GET data
@@ -71,14 +72,17 @@ class MockServer:
 
 
 class TestTimetableQuery(unittest.TestCase):
+    """Test suite for TimetableQuery functionality."""
 
     default_headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
     def setUp(self):
+        """Set up test fixtures."""
         self.mock_server = MockServer()
         self.tq = qt.TimetableQuery(refresh=0)
 
     def check_in_context(self, in_context=False):
+        """Check if timetable query is in context."""
         if in_context:
             self.assertTrue(self.tq.in_context)
             self.assertIsNotNone(self.tq.session)
@@ -428,8 +432,10 @@ def clear_messages(mapping, key="messages"):
 
 
 class TestTimetableParse(unittest.TestCase):
+    """Test suite for timetable parsing functionality."""
 
     def check_parsed(self, year, term, subject, code, ignore_msgs=False):
+        """Check if timetable parsing produces expected results."""
         fname = absolute_path(f"data/{subject}{code}_{term}{year}")
         with open(fname + ".html", "r") as f:
             raw = f.read()
