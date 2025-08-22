@@ -69,7 +69,7 @@ def subject_tag(tag: Tag, url_prefix: str):
             return Subject(
                 subject=subject,
                 subject_code=subject_code,
-                link=url_prefix + path + "/",  # pyright: ignore
+                link=url_prefix + path + "/",  # type: ignore  # pyright: ignore
             )
         case s, h:
             raise ValueError(f"Expected strings, got {type(s)} and {type(h)}")
