@@ -577,7 +577,7 @@ def extract_section(section, descr, log=False, err_msg_prefix=""):
     if len(instrs) > len(dttms):
         d = len(dttms)
         q = len(instrs) // d
-        instrs = [", ".join(instrs[d * i: d * (i + 1)]) for i in range(q)]
+        instrs = [", ".join(instrs[d * i : d * (i + 1)]) for i in range(q)]
     elif len(instrs) < len(dttms):
         instrs = [", ".join(sorted(set(instrs)))] * len(dttms)
         em("debug", "distributing instructors accross days")
@@ -663,9 +663,11 @@ def distribute_shared_sections(
         for component in section["components"]:
             if component["type"] not in sec_comps[section["label"]]:
                 sec_comps[section["label"]].append(component["type"])
+
     # Get sections with x distinct IDs for each x.
     def arr_lookup(elt):
         return len(sec_comps[elt["label"]])
+
     comp_secs = group_by_eq(sections, arr_lookup)
     # If there are no sections with only one ID,
     # this course is already well distributed.

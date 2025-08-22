@@ -31,6 +31,7 @@ def tag_is_term(x):
 def tables_div(x):
     return search_tag(x, "div", "class", "uoe--content", lambda y, z: y in z)
 
+
 cal = Calendar()
 strformat = {1: "-%m-%d", 2: "%H:%M:%S"}
 strformat[3] = strformat[1] + "T" + strformat[2]
