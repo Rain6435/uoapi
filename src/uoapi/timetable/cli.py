@@ -1,19 +1,21 @@
-import logging
-logging.getLogger(__name__)
-
-import os, sys, time
 import json
-import argparse
+import logging
+import os
+import sys
+import time
 
 import regex as re
 
 from uoapi import __version__
 from uoapi.cli_tools import make_parser, make_cli
-from uoapi.timetable import query_timetable as qt
 from uoapi.rmp import inject_ratings_into_timetable
+from uoapi.timetable import query_timetable as qt
+
+logging.getLogger(__name__)
 
 help = "A tool for querying the timetables of courses in a term"
-description = ("You can query course codes like `MAT 3143`, "
+description = (
+    "You can query course codes like `MAT 3143`, "
     + "subjects at a level like `MAT3` "
     + "(write `XXX5` for graduate courses in subject `XXX`), "
     + "and subjects like `MAT`.\n"
@@ -30,69 +32,88 @@ description = ("You can query course codes like `MAT 3143`, "
 )
 epilog = ""
 
+
 @make_parser(description=description, epilog=epilog)
 def parser(default):
-    default.add_argument("-a", "--available",
+    default.add_argument(
+        "-a",
+        "--available",
         action="store_true",
         default=False,
         help="display available terms; if given, all other arguments are ignored",
     )
-    default.add_argument("--term", "-t",
+    default.add_argument(
+        "--term",
+        "-t",
         action="store",
         metavar="TERM",
         choices=["winter", "summer", "fall"],
-        #required=True,
-        help="specify which term to query (winter, summer, fall)"
+        # required=True,
+        help="specify which term to query (winter, summer, fall)",
     )
-    default.add_argument("--year", "-y",
+    default.add_argument(
+        "--year",
+        "-y",
         action="store",
         metavar="YEAR",
-        #required=True,
+        # required=True,
         type=int,
-        help="specify which year to query (2019, 2020)"
+        help="specify which year to query (2019, 2020)",
     )
-    default.add_argument("courses", 
+    default.add_argument(
+        "courses",
         action="store",
         metavar="XXX[[<>=?]?0[000]]",
         nargs="*",
-        help="list of course codes to query"
+        help="list of course codes to query",
     )
-    default.add_argument("-s", "--saveraw",
+    default.add_argument(
+        "-s",
+        "--saveraw",
         action="store",
         metavar="/PATH/TO/DIR/",
         required=False,
-        help="if given, save raw html in this folder"
+        help="if given, save raw html in this folder",
     )
-    default.add_argument("-w", "--waittime",
+    default.add_argument(
+        "-w",
+        "--waittime",
         action="store",
         type=float,
         default=2,
         help="specify time (in seconds) to wait between requests",
     )
-    default.add_argument("-f", "--refresh",
+    default.add_argument(
+        "-f",
+        "--refresh",
         action="store",
         type=int,
         default=10,
         help="refresh connection after this number of queries",
     )
-    default.add_argument("-r", "--retries",
+    default.add_argument(
+        "-r",
+        "--retries",
         action="store",
         type=int,
         default=2,
         help="how many times to try and connect to the server",
     )
-    default.add_argument("--include-ratings",
+    default.add_argument(
+        "--include-ratings",
         action="store_true",
         default=False,
         help="include Rate My Professor ratings for instructors",
     )
-    default.add_argument("--school",
+    default.add_argument(
+        "--school",
         action="store",
         required=True,
         choices=["University of Ottawa", "Carleton University", "uottawa", "carleton"],
         help="school name for rating lookup (required)",
     )
     return default
+
 
 def get_subj_code(arg):
     arg = arg.strip().upper()
@@ -109,6 +130,7 @@ def get_subj_code(arg):
     if match is not None:
         return [(match.group(), i) for i in range(1, 6)]
     return []
+
 
 @make_cli(parser)
 def cli(args=None):
@@ -129,40 +151,61 @@ def cli(args=None):
     else:
         args.waittime = max(0, args.waittime)
         for out in main(
-            args.courses, args.year, args.term, 
-            args.saveraw, args.refresh, args.retries, args.waittime,
-            args.include_ratings, args.school,
+            args.courses,
+            args.year,
+            args.term,
+            args.saveraw,
+            args.refresh,
+            args.retries,
+            args.waittime,
+            args.include_ratings,
+            args.school,
         ):
             print(json.dumps(out))
+
 
 def available(retries=2):
     try:
         tq = qt.TimetableQuery(retries=retries)
         with tq as gm:
-            out = {"available": [
-                available_terms
-                # Map the function which parses uOttawa term codes
-                # across the sequence of codes (the keys in `tq.available`).
-                for available_terms in map(qt.parse_available, tq.available.keys())
-                # Filter out the codes which failed to parse.
-                if available_terms is not None
-            ]}
+            out = {
+                "available": [
+                    available_terms
+                    # Map the function which parses uOttawa term codes
+                    # across the sequence of codes (the keys in `tq.available`).
+                    for available_terms in map(qt.parse_available, tq.available.keys())
+                    # Filter out the codes which failed to parse.
+                    if available_terms is not None
+                ]
+            }
         out["messages"] = gm
         return out
     except Exception as e:
         return {
             "available": [],
-            "messages": [{
-                "type": "error",
-                "message": "Unknown failure: {} = {}".format(type(e), e),
-            }],
+            "messages": [
+                {
+                    "type": "error",
+                    "message": "Unknown failure: {} = {}".format(type(e), e),
+                }
+            ],
         }
 
-def main(courses, year, term, saveraw=None, refresh=5, retries=2, 
-         waittime=2, include_ratings=False, school=None):
+
+def main(
+    courses,
+    year,
+    term,
+    saveraw=None,
+    refresh=5,
+    retries=2,
+    waittime=2,
+    include_ratings=False,
+    school=None,
+):
     if school is None:
         raise ValueError("School parameter is required")
-    
+
     if saveraw is not None and os.path.isdir(saveraw):
         saveraw = os.path.join(saveraw, __version__, str(year), str(term))
         os.makedirs(
@@ -177,32 +220,40 @@ def main(courses, year, term, saveraw=None, refresh=5, retries=2,
                 try:
                     resp, msgs = tq(year, term, subj, code)
                 except Exception as e:
-                    logging.debug("Failed to query {} {}, {}{}: {}".format(
-                        term, year, subj, code, repr(e)
-                    ), exc_info=True)
-                    logging.error("Failed to query {} {}, {}{}: {}".format(
-                        term, year, subj, code, repr(e)
-                    ))
+                    logging.debug(
+                        "Failed to query {} {}, {}{}: {}".format(term, year, subj, code, repr(e)),
+                        exc_info=True,
+                    )
+                    logging.error(
+                        "Failed to query {} {}, {}{}: {}".format(term, year, subj, code, repr(e))
+                    )
                     resp = ""
-                    msgs = [{
-                        "type": "error",
-                        "message": "Query failure",
-                    }]
+                    msgs = [
+                        {
+                            "type": "error",
+                            "message": "Query failure",
+                        }
+                    ]
                 if "" == resp:
                     out = []
                     logging.warning("No data for {} {}, {}{}".format(term, year, subj, code))
-                    #@TODO Handle different failure modes
+                    # @TODO Handle different failure modes
                 else:
                     logging.info("Got data for {} {}, {}{}".format(term, year, subj, code))
                     try:
                         out = list(qt.extract_timetable(resp, year, term, log=True))
                     except Exception as e:
-                        logging.debug("Failed to parse {} {}, {}{}: {}".format(
-                            term, year, subj, code, repr(e)
-                        ), exc_info=True)
-                        logging.error("Failed to parse {} {}, {}{}: {}".format(
-                            term, year, subj, code, repr(e)
-                        ))
+                        logging.debug(
+                            "Failed to parse {} {}, {}{}: {}".format(
+                                term, year, subj, code, repr(e)
+                            ),
+                            exc_info=True,
+                        )
+                        logging.error(
+                            "Failed to parse {} {}, {}{}: {}".format(
+                                term, year, subj, code, repr(e)
+                            )
+                        )
                         out = []
                         msgs += {
                             "type": "error",
@@ -210,13 +261,13 @@ def main(courses, year, term, saveraw=None, refresh=5, retries=2,
                         }
                     else:
                         logging.info("Parsed data for {} {}, {}{}".format(term, year, subj, code))
-                
+
                 # Prepare output data
                 output_data = {
                     "timetables": out,
                     "messages": msgs,
                 }
-                
+
                 # Inject ratings if requested
                 if include_ratings:
                     try:
@@ -224,16 +275,17 @@ def main(courses, year, term, saveraw=None, refresh=5, retries=2,
                     except Exception as e:
                         logging.warning(f"Failed to inject ratings: {e}")
                         # Add a message about the rating failure
-                        output_data["messages"].append({
-                            "type": "warning",
-                            "message": f"Failed to add instructor ratings: {e}",
-                        })
-                
+                        output_data["messages"].append(
+                            {
+                                "type": "warning",
+                                "message": f"Failed to add instructor ratings: {e}",
+                            }
+                        )
+
                 yield output_data
             time.sleep(waittime)
-    yield {
-        "messages": gm
-    }
+    yield {"messages": gm}
+
 
 if __name__ == "__main__":
     cli()

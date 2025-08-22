@@ -123,11 +123,11 @@ def parse_instructor_name(instructor_text: str) -> Optional[tuple]:
 
     # Remove common prefixes and suffixes
     instructor_text = re.sub(
-        r'\b(Dr|Prof|Professor|Mr|Ms|Mrs)\b\.?\s*', 
+        r'\b(Dr|Prof|Professor|Mr|Ms|Mrs)\b\.?\s*',
         '', instructor_text, flags=re.IGNORECASE
     )
     instructor_text = re.sub(
-        r'\s*,?\s*(Ph\.?D\.?|PhD|M\.?D\.?|MD)\b.*$', 
+        r'\s*,?\s*(Ph\.?D\.?|PhD|M\.?D\.?|MD)\b.*$',
         '', instructor_text, flags=re.IGNORECASE
     )
 
@@ -211,7 +211,7 @@ def inject_ratings_into_timetable(
     enhanced_data = dict(timetable_data)
 
     # Check if this has timetables array
-    if ("timetables" in enhanced_data and 
+    if ("timetables" in enhanced_data and
             isinstance(enhanced_data["timetables"], list)):
         enhanced_timetables = []
         for timetable_entry in enhanced_data["timetables"]:
@@ -225,40 +225,54 @@ def inject_ratings_into_timetable(
 
                 # Add rating fields to the entry
                 enhanced_entry["instructor_rating"] = rating_info["rating"]
-                enhanced_entry["instructor_num_ratings"] = rating_info["num_ratings"]
-                enhanced_entry["instructor_department"] = rating_info["department"]
+                enhanced_entry["instructor_num_ratings"] = (
+                    rating_info["num_ratings"]
+                )
+                enhanced_entry["instructor_department"] = (
+                    rating_info["department"]
+                )
                 enhanced_entry["instructor_rmp_id"] = rating_info["rmp_id"]
-            
+
             # Handle nested structure - sections with components
-            if ("sections" in enhanced_entry and 
+            if ("sections" in enhanced_entry and
                     isinstance(enhanced_entry["sections"], list)):
                 enhanced_sections = []
                 for section in enhanced_entry["sections"]:
                     enhanced_section = dict(section)
-                    
-                    if ("components" in enhanced_section and 
+
+                    if ("components" in enhanced_section and
                             isinstance(enhanced_section["components"], list)):
                         enhanced_components = []
                         for component in enhanced_section["components"]:
                             enhanced_component = dict(component)
-                            
+
                             # If this component has an instructor field, add rating
                             if "instructor" in enhanced_component:
                                 instructor_text = enhanced_component["instructor"]
-                                rating_info = get_instructor_rating(instructor_text, school_name)
-                                
+                                rating_info = get_instructor_rating(
+                                    instructor_text, school_name
+                                )
+
                                 # Add rating fields to the component
-                                enhanced_component["instructor_rating"] = rating_info["rating"]
-                                enhanced_component["instructor_num_ratings"] = rating_info["num_ratings"]
-                                enhanced_component["instructor_department"] = rating_info["department"]
-                                enhanced_component["instructor_rmp_id"] = rating_info["rmp_id"]
-                            
+                                enhanced_component["instructor_rating"] = (
+                                    rating_info["rating"]
+                                )
+                                enhanced_component["instructor_num_ratings"] = (
+                                    rating_info["num_ratings"]
+                                )
+                                enhanced_component["instructor_department"] = (
+                                    rating_info["department"]
+                                )
+                                enhanced_component["instructor_rmp_id"] = (
+                                    rating_info["rmp_id"]
+                                )
+
                             enhanced_components.append(enhanced_component)
-                        
+
                         enhanced_section["components"] = enhanced_components
-                    
+
                     enhanced_sections.append(enhanced_section)
-                
+
                 enhanced_entry["sections"] = enhanced_sections
 
             enhanced_timetables.append(enhanced_entry)

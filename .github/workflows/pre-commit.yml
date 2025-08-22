@@ -52,7 +52,7 @@ jobs:
             rev: v1.3.0
             hooks:
             -   id: mypy
-                additional_dependencies: [pydantic<2, types-requests]
+                additional_dependencies: [pydantic<2, types-requests, RateMyProfessorAPI]
         EOF
         fi
         
