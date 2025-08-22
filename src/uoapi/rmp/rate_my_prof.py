@@ -26,14 +26,14 @@ def get_school_by_name(school_name: str) -> Optional[School]:
         School object if found, None otherwise
     """
     normalized_name = school_name.lower().strip()
-    
+
     if normalized_name not in SCHOOL_DATA:
         return None
-    
+
     # Check cache first
     if normalized_name in _school_cache:
         return _school_cache[normalized_name]
-    
+
     # Create School object
     school_id, school_name_formal = SCHOOL_DATA[normalized_name]
     try:
@@ -47,7 +47,7 @@ def get_school_by_name(school_name: str) -> Optional[School]:
             return None
     except Exception:
         return None
-    
+
     # Cache the result
     _school_cache[normalized_name] = school
     return school
