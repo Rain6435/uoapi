@@ -44,37 +44,41 @@ def get_professor_ratings(professors: List[tuple], school_name: str) -> List[Dic
 
     for first_name, last_name in professors:
         try:
-            professor = get_professor_by_school_and_name(
-                school, f"{first_name} {last_name}"
-            )
+            professor = get_professor_by_school_and_name(school, f"{first_name} {last_name}")
             if professor:
-                professor_data.append({
-                    "rmp_id": professor.id,
-                    "first_name": first_name,
-                    "last_name": last_name,
-                    "rating": professor.rating,
-                    "num_ratings": professor.num_ratings,
-                    "department": professor.department
-                })
+                professor_data.append(
+                    {
+                        "rmp_id": professor.id,
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "rating": professor.rating,
+                        "num_ratings": professor.num_ratings,
+                        "department": professor.department,
+                    }
+                )
             else:
-                professor_data.append({
+                professor_data.append(
+                    {
+                        "rmp_id": None,
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "rating": None,
+                        "num_ratings": 0,
+                        "department": None,
+                    }
+                )
+        except Exception as e:
+            professor_data.append(
+                {
                     "rmp_id": None,
                     "first_name": first_name,
                     "last_name": last_name,
                     "rating": None,
                     "num_ratings": 0,
-                    "department": None
-                })
-        except Exception as e:
-            professor_data.append({
-                "rmp_id": None,
-                "first_name": first_name,
-                "last_name": last_name,
-                "rating": None,
-                "num_ratings": 0,
-                "department": None,
-                "error": str(e)
-            })
+                    "department": None,
+                    "error": str(e),
+                }
+            )
 
     return professor_data
 
@@ -101,11 +105,7 @@ def get_teachers_ratings_by_school(
 
     ratings = get_professor_ratings(professors, school_name)
 
-    return {
-        "ratings": ratings,
-        "school_id": school.id,
-        "school_name": school.name
-    }
+    return {"ratings": ratings, "school_id": school.id, "school_name": school.name}
 
 
 def parse_instructor_name(instructor_text: str) -> Optional[tuple]:
@@ -123,17 +123,15 @@ def parse_instructor_name(instructor_text: str) -> Optional[tuple]:
 
     # Remove common prefixes and suffixes
     instructor_text = re.sub(
-        r'\b(Dr|Prof|Professor|Mr|Ms|Mrs)\b\.?\s*',
-        '', instructor_text, flags=re.IGNORECASE
+        r"\b(Dr|Prof|Professor|Mr|Ms|Mrs)\b\.?\s*", "", instructor_text, flags=re.IGNORECASE
     )
     instructor_text = re.sub(
-        r'\s*,?\s*(Ph\.?D\.?|PhD|M\.?D\.?|MD)\b.*$',
-        '', instructor_text, flags=re.IGNORECASE
+        r"\s*,?\s*(Ph\.?D\.?|PhD|M\.?D\.?|MD)\b.*$", "", instructor_text, flags=re.IGNORECASE
     )
 
     # Handle multiple instructors (take the first one)
-    if ',' in instructor_text:
-        instructor_text = instructor_text.split(',')[0]
+    if "," in instructor_text:
+        instructor_text = instructor_text.split(",")[0]
 
     # Split into parts
     parts = instructor_text.strip().split()
@@ -165,7 +163,7 @@ def get_instructor_rating(instructor_text: str, school_name: str) -> Dict[str, A
             "rating": None,
             "num_ratings": 0,
             "department": None,
-            "rmp_id": None
+            "rmp_id": None,
         }
 
     try:
@@ -177,7 +175,7 @@ def get_instructor_rating(instructor_text: str, school_name: str) -> Dict[str, A
                 "rating": rating_data.get("rating"),
                 "num_ratings": rating_data.get("num_ratings", 0),
                 "department": rating_data.get("department"),
-                "rmp_id": rating_data.get("rmp_id")
+                "rmp_id": rating_data.get("rmp_id"),
             }
     except Exception:
         pass
@@ -187,7 +185,7 @@ def get_instructor_rating(instructor_text: str, school_name: str) -> Dict[str, A
         "rating": None,
         "num_ratings": 0,
         "department": None,
-        "rmp_id": None
+        "rmp_id": None,
     }
 
 
@@ -211,8 +209,7 @@ def inject_ratings_into_timetable(
     enhanced_data = dict(timetable_data)
 
     # Check if this has timetables array
-    if ("timetables" in enhanced_data and
-            isinstance(enhanced_data["timetables"], list)):
+    if "timetables" in enhanced_data and isinstance(enhanced_data["timetables"], list):
         enhanced_timetables = []
         for timetable_entry in enhanced_data["timetables"]:
             enhanced_entry = dict(timetable_entry)
@@ -225,23 +222,19 @@ def inject_ratings_into_timetable(
 
                 # Add rating fields to the entry
                 enhanced_entry["instructor_rating"] = rating_info["rating"]
-                enhanced_entry["instructor_num_ratings"] = (
-                    rating_info["num_ratings"]
-                )
-                enhanced_entry["instructor_department"] = (
-                    rating_info["department"]
-                )
+                enhanced_entry["instructor_num_ratings"] = rating_info["num_ratings"]
+                enhanced_entry["instructor_department"] = rating_info["department"]
                 enhanced_entry["instructor_rmp_id"] = rating_info["rmp_id"]
 
             # Handle nested structure - sections with components
-            if ("sections" in enhanced_entry and
-                    isinstance(enhanced_entry["sections"], list)):
+            if "sections" in enhanced_entry and isinstance(enhanced_entry["sections"], list):
                 enhanced_sections = []
                 for section in enhanced_entry["sections"]:
                     enhanced_section = dict(section)
 
-                    if ("components" in enhanced_section and
-                            isinstance(enhanced_section["components"], list)):
+                    if "components" in enhanced_section and isinstance(
+                        enhanced_section["components"], list
+                    ):
                         enhanced_components = []
                         for component in enhanced_section["components"]:
                             enhanced_component = dict(component)
@@ -249,23 +242,17 @@ def inject_ratings_into_timetable(
                             # If this component has an instructor field, add rating
                             if "instructor" in enhanced_component:
                                 instructor_text = enhanced_component["instructor"]
-                                rating_info = get_instructor_rating(
-                                    instructor_text, school_name
-                                )
+                                rating_info = get_instructor_rating(instructor_text, school_name)
 
                                 # Add rating fields to the component
-                                enhanced_component["instructor_rating"] = (
-                                    rating_info["rating"]
-                                )
-                                enhanced_component["instructor_num_ratings"] = (
-                                    rating_info["num_ratings"]
-                                )
-                                enhanced_component["instructor_department"] = (
-                                    rating_info["department"]
-                                )
-                                enhanced_component["instructor_rmp_id"] = (
-                                    rating_info["rmp_id"]
-                                )
+                                enhanced_component["instructor_rating"] = rating_info["rating"]
+                                enhanced_component["instructor_num_ratings"] = rating_info[
+                                    "num_ratings"
+                                ]
+                                enhanced_component["instructor_department"] = rating_info[
+                                    "department"
+                                ]
+                                enhanced_component["instructor_rmp_id"] = rating_info["rmp_id"]
 
                             enhanced_components.append(enhanced_component)
 

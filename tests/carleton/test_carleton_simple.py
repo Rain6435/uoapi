@@ -10,14 +10,18 @@ import json
 from dataclasses import asdict
 
 from uoapi.carleton.models import (
-    Course, CourseSection, MeetingTime, TermResult,
-    to_json_serializable, format_output
+    Course,
+    CourseSection,
+    MeetingTime,
+    TermResult,
+    to_json_serializable,
+    format_output,
 )
 
 
 class TestCarletonModels:
     """Test Carleton data models and serialization."""
-    
+
     def test_meeting_time_creation(self):
         """Test MeetingTime dataclass creation."""
         meeting = MeetingTime(
@@ -25,7 +29,7 @@ class TestCarletonModels:
             end_date="2024-04-05",
             days="MWF",
             start_time="10:05",
-            end_time="11:25"
+            end_time="11:25",
         )
         assert meeting.start_date == "2024-01-08"
         assert meeting.days == "MWF"
@@ -35,10 +39,10 @@ class TestCarletonModels:
         """Test CourseSection dataclass creation."""
         meeting = MeetingTime(
             start_date="2024-01-08",
-            end_date="2024-04-05", 
+            end_date="2024-04-05",
             days="MWF",
             start_time="10:05",
-            end_time="11:25"
+            end_time="11:25",
         )
         section = CourseSection(
             crn="12345",
@@ -48,7 +52,7 @@ class TestCarletonModels:
             schedule_type="Lecture",
             instructor="Dr. Smith",
             meeting_times=[meeting],
-            notes=["Additional requirements"]
+            notes=["Additional requirements"],
         )
         assert section.crn == "12345"
         assert section.status == "Open"
@@ -69,7 +73,7 @@ class TestCarletonModels:
             banner_credits=0.5,
             sections=[],
             error=False,
-            error_message=""
+            error_message="",
         )
         assert course.course_code == "COMP1405"
         assert course.is_offered is True
@@ -90,7 +94,7 @@ class TestCarletonModels:
             offering_rate_percent=67.5,
             subject_statistics={},
             courses=[],
-            processed_at="2024-01-15T10:30:00Z"
+            processed_at="2024-01-15T10:30:00Z",
         )
         assert term.term_code == "202401"
         assert term.offering_rate_percent == 67.5
@@ -101,18 +105,18 @@ class TestCarletonModels:
         meeting = MeetingTime(
             start_date="2024-01-08",
             end_date="2024-04-05",
-            days="MWF", 
+            days="MWF",
             start_time="10:05",
-            end_time="11:25"
+            end_time="11:25",
         )
-        
+
         result = to_json_serializable(meeting)
         expected = {
-            'start_date': '2024-01-08',
-            'end_date': '2024-04-05',
-            'days': 'MWF',
-            'start_time': '10:05',
-            'end_time': '11:25'
+            "start_date": "2024-01-08",
+            "end_date": "2024-04-05",
+            "days": "MWF",
+            "start_time": "10:05",
+            "end_time": "11:25",
         }
         assert result == expected
 
@@ -120,44 +124,39 @@ class TestCarletonModels:
         """Test JSON serialization with lists."""
         meetings = [
             MeetingTime("2024-01-08", "2024-04-05", "MWF", "10:05", "11:25"),
-            MeetingTime("2024-01-08", "2024-04-05", "TR", "14:05", "15:25")
+            MeetingTime("2024-01-08", "2024-04-05", "TR", "14:05", "15:25"),
         ]
-        
+
         result = to_json_serializable(meetings)
         assert len(result) == 2
-        assert result[0]['days'] == 'MWF'
-        assert result[1]['days'] == 'TR'
+        assert result[0]["days"] == "MWF"
+        assert result[1]["days"] == "TR"
 
     def test_format_output(self):
         """Test standard output formatting."""
         data = {"test": "value"}
         messages = ["Success"]
-        
+
         result = format_output(data, messages)
-        expected = {
-            "data": {"test": "value"},
-            "messages": ["Success"]
-        }
+        expected = {"data": {"test": "value"}, "messages": ["Success"]}
         assert result == expected
 
     def test_format_output_empty(self):
         """Test output formatting with empty data."""
         result = format_output(None)
-        expected = {
-            "data": [],
-            "messages": []
-        }
+        expected = {"data": [], "messages": []}
         assert result == expected
 
 
 class TestCarletonIntegration:
     """Integration tests for Carleton functionality."""
-    
+
     @pytest.mark.integration
     def test_cli_integration(self):
         """Test CLI integration with Carleton module."""
         # Test that CLI functions can be imported from carleton package
         from uoapi.carleton import cli, parser
+
         # Check that functions exist and are callable
         assert callable(cli)
         assert callable(parser)
@@ -166,15 +165,15 @@ class TestCarletonIntegration:
     def test_discovery_class_exists(self):
         """Test that discovery class can be imported."""
         from uoapi.carleton.discovery import CarletonDiscovery
-        
+
         # Should be able to create instance
         discovery = CarletonDiscovery()
         assert discovery is not None
-        
+
         # Should have expected methods
-        assert hasattr(discovery, 'get_available_terms')
-        assert hasattr(discovery, 'get_subjects_for_term')
-        assert hasattr(discovery, 'search_course')
+        assert hasattr(discovery, "get_available_terms")
+        assert hasattr(discovery, "get_subjects_for_term")
+        assert hasattr(discovery, "search_course")
 
     def test_data_flow_serialization(self):
         """Test complete data flow from models to JSON."""
@@ -184,9 +183,9 @@ class TestCarletonIntegration:
             end_date="2024-04-05",
             days="MWF",
             start_time="10:05",
-            end_time="11:25"
+            end_time="11:25",
         )
-        
+
         section = CourseSection(
             crn="12345",
             section="A",
@@ -195,9 +194,9 @@ class TestCarletonIntegration:
             schedule_type="Lecture",
             instructor="Dr. Smith",
             meeting_times=[meeting],
-            notes=[]
+            notes=[],
         )
-        
+
         course = Course(
             course_code="COMP1405",
             subject_code="COMP",
@@ -210,24 +209,27 @@ class TestCarletonIntegration:
             banner_credits=0.5,
             sections=[section],
             error=False,
-            error_message=""
+            error_message="",
         )
-        
+
         # Test serialization
         serialized = to_json_serializable(course)
         json_str = json.dumps(serialized)
-        
+
         # Should be valid JSON
         parsed = json.loads(json_str)
         assert parsed["course_code"] == "COMP1405"
         assert len(parsed["sections"]) == 1
         assert parsed["sections"][0]["crn"] == "12345"
 
-    @pytest.mark.parametrize("course_code,subject,number", [
-        ("COMP1405", "COMP", "1405"),
-        ("MATH1007", "MATH", "1007"),
-        ("PHYS1007", "PHYS", "1007"),
-    ])
+    @pytest.mark.parametrize(
+        "course_code,subject,number",
+        [
+            ("COMP1405", "COMP", "1405"),
+            ("MATH1007", "MATH", "1007"),
+            ("PHYS1007", "PHYS", "1007"),
+        ],
+    )
     def test_course_code_parsing(self, course_code, subject, number):
         """Test course code parsing patterns."""
         course = Course(
@@ -242,9 +244,9 @@ class TestCarletonIntegration:
             banner_credits=0.5,
             sections=[],
             error=False,
-            error_message=""
+            error_message="",
         )
-        
+
         assert course.course_code == course_code
         assert course.subject_code == subject
         assert course.course_number == number

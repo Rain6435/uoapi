@@ -27,6 +27,7 @@ def mock_subject_list(page: str):
     )
     def inner(_url, _request):
         return page
+
     return inner
 
 
@@ -43,6 +44,7 @@ def test_subjects():
 
 def mock_subject_page(link: str, page: str):
     url = urlparse(link)
+
     @urlmatch(
         method="GET",
         netloc=url.netloc,
@@ -50,6 +52,7 @@ def mock_subject_page(link: str, page: str):
     )
     def inner(_url, _request):
         return page
+
     return inner
 
 
@@ -61,6 +64,4 @@ def test_courses():
     for subject in course_data["subjects"]:
         with HTTMock(mock_subject_page(subject["link"], subject["page"])):
             results = list(get_courses(subject["link"]))
-            assert subject["courses"] == results, (
-                "Differs from commit {}".format(commit),
-            )
+            assert subject["courses"] == results, ("Differs from commit {}".format(commit),)

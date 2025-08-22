@@ -30,10 +30,7 @@ def extract_credits(string: str):
     Used in get_subjects.ipynb
     """
     credits = list(
-        {
-            int(x.group(0).split(" ")[0].strip("("))
-            for x in re.finditer(pt.credit_re, string)
-        }
+        {int(x.group(0).split(" ")[0].strip("(")) for x in re.finditer(pt.credit_re, string)}
     )
     if len(credits) == 1:
         return credits[0]
@@ -112,9 +109,7 @@ def split_component_parts(components: str) -> list[str]:
     Splits a components string into a list of individual components.
     """
 
-    return [
-        component.strip().upper() for component in components.split("/")[-1].split(",")
-    ]
+    return [component.strip().upper() for component in components.split("/")[-1].split(",")]
 
 
 def replace_special_spaces(string: str) -> str:

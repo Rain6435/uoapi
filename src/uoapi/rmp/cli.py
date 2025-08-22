@@ -4,22 +4,25 @@ from uoapi.rmp import get_teachers_ratings_by_school
 from uoapi.cli_tools import make_parser, make_cli
 
 description = "A tool for querying Rate My Professor ratings"
-help = ("Provide --school (-s) with school name and optionally "
-        "--professors (-p) with professor names.")
+help = (
+    "Provide --school (-s) with school name and optionally "
+    "--professors (-p) with professor names."
+)
 epilog = "Supported schools: University of Ottawa, Carleton University"
 
 
 @make_parser(description=description, epilog=epilog)
 def parser(default):
     default.add_argument(
-        "-s", "--school",
+        "-s",
+        "--school",
         action="store",
         required=True,
-        help=("School name (University of Ottawa, Carleton University, "
-              "uottawa, carleton)"),
+        help=("School name (University of Ottawa, Carleton University, " "uottawa, carleton)"),
     )
     default.add_argument(
-        "-p", "--professors",
+        "-p",
+        "--professors",
         action="store",
         nargs="*",
         help="Professor names in format 'FirstName LastName' (optional)",

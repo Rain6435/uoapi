@@ -13,15 +13,15 @@ from uoapi.course.models import Subject, Course, Prerequisite, Component
 
 class TestSubjectModel:
     """Test Subject model validation and functionality."""
-    
+
     def test_valid_subject_creation(self):
         """Test creating a valid Subject instance."""
         subject = Subject(
             subject="Computer Science",
             subject_code="CSI",
-            link="https://catalogue.uottawa.ca/en/courses/csi/"
+            link="https://catalogue.uottawa.ca/en/courses/csi/",
         )
-        
+
         assert subject.subject == "Computer Science"
         assert subject.subject_code == "CSI"
         assert str(subject.link) == "https://catalogue.uottawa.ca/en/courses/csi/"
@@ -29,11 +29,7 @@ class TestSubjectModel:
     def test_subject_with_invalid_url(self):
         """Test Subject validation with invalid URL."""
         with pytest.raises(ValidationError):
-            Subject(
-                subject="Computer Science",
-                subject_code="CSI",
-                link="not-a-valid-url"
-            )
+            Subject(subject="Computer Science", subject_code="CSI", link="not-a-valid-url")
 
     def test_subject_required_fields(self):
         """Test that Subject requires all fields."""
@@ -44,10 +40,10 @@ class TestSubjectModel:
         """Test Subject serialization to dict."""
         subject = Subject(
             subject="Computer Science",
-            subject_code="CSI", 
-            link="https://catalogue.uottawa.ca/en/courses/csi/"
+            subject_code="CSI",
+            link="https://catalogue.uottawa.ca/en/courses/csi/",
         )
-        
+
         data = subject.dict()
         assert data["subject"] == "Computer Science"
         assert data["subject_code"] == "CSI"
@@ -56,7 +52,7 @@ class TestSubjectModel:
 
 class TestCourseModel:
     """Test Course model validation and functionality."""
-    
+
     def test_valid_course_creation(self):
         """Test creating a valid Course instance."""
         course = Course(
@@ -66,9 +62,9 @@ class TestCourseModel:
             description="Introduction to web programming concepts...",
             components=["LECTURE", "LAB"],
             prerequisites="CSI2520, CSI2101",
-            dependencies=[["CSI2520"], ["CSI2101"]]
+            dependencies=[["CSI2520"], ["CSI2101"]],
         )
-        
+
         assert course.course_code == "CSI3140"
         assert course.title == "World Wide Web Programming"
         assert course.credits == 3
@@ -81,9 +77,9 @@ class TestCourseModel:
             course_code="CSI1100",
             title="Introduction to Computing",
             credits=3,
-            description="Basic computing concepts"
+            description="Basic computing concepts",
         )
-        
+
         assert course.course_code == "CSI1100"
         assert course.components == []  # Default empty list
         assert course.prerequisites == ""  # Default empty string
@@ -92,22 +88,12 @@ class TestCourseModel:
     def test_course_credits_validation(self):
         """Test Course credits validation (must be >= 0)."""
         # Valid credits
-        course = Course(
-            course_code="CSI1100",
-            title="Test Course", 
-            credits=0,
-            description="Test"
-        )
+        course = Course(course_code="CSI1100", title="Test Course", credits=0, description="Test")
         assert course.credits == 0
-        
+
         # Invalid negative credits
         with pytest.raises(ValidationError):
-            Course(
-                course_code="CSI1100",
-                title="Test Course",
-                credits=-1,
-                description="Test"
-            )
+            Course(course_code="CSI1100", title="Test Course", credits=-1, description="Test")
 
     def test_course_required_fields(self):
         """Test that Course requires all mandatory fields."""
@@ -123,10 +109,10 @@ class TestCourseModel:
             description="Test description",
             dependencies=[
                 ["CSI2520"],  # Required course
-                ["CSI2101", "CSI2110"]  # Alternative courses (OR)
-            ]
+                ["CSI2101", "CSI2110"],  # Alternative courses (OR)
+            ],
         )
-        
+
         assert len(course.dependencies) == 2
         assert len(course.dependencies[1]) == 2  # OR group
 
@@ -139,9 +125,9 @@ class TestCourseModel:
             description="Web programming course",
             components=["LECTURE"],
             prerequisites="CSI2520",
-            dependencies=[["CSI2520"]]
+            dependencies=[["CSI2520"]],
         )
-        
+
         data = course.dict()
         assert data["course_code"] == "CSI3140"
         assert data["credits"] == 3
@@ -151,7 +137,7 @@ class TestCourseModel:
 
 class TestPrerequisiteModel:
     """Test Prerequisite model validation and parsing."""
-    
+
     def test_prerequisite_creation(self):
         """Test creating a Prerequisite instance."""
         prereq = Prerequisite(content="Prerequisite: CSI2520, CSI2101")
@@ -163,7 +149,7 @@ class TestPrerequisiteModel:
         prereq = Prerequisite.try_parse("Prerequisite: CSI2520 and CSI2101")
         assert prereq is not None
         assert "Prerequisite" in prereq.content
-        
+
         # French prerequisite
         prereq_fr = Prerequisite.try_parse("Préalable: CSI2520 et CSI2101")
         assert prereq_fr is not None
@@ -174,7 +160,7 @@ class TestPrerequisiteModel:
         # Should return None for non-prerequisite text
         result = Prerequisite.try_parse("This is just regular course content")
         assert result is None
-        
+
         result = Prerequisite.try_parse("Course Component: Lecture")
         assert result is None
 
@@ -183,11 +169,11 @@ class TestPrerequisiteModel:
         # Empty string
         result = Prerequisite.try_parse("")
         assert result is None
-        
+
         # Case sensitivity (current implementation is case-sensitive)
         result = Prerequisite.try_parse("prerequisite: CSI2520")
         assert result is None  # Current implementation requires exact case
-        
+
         # Partial match (requires exact "Prerequisite" or "Préalable")
         result = Prerequisite.try_parse("The Prerequisite is CSI2520")
         assert result is not None
@@ -195,7 +181,7 @@ class TestPrerequisiteModel:
 
 class TestComponentModel:
     """Test Component model validation and parsing."""
-    
+
     def test_component_creation(self):
         """Test creating a Component instance."""
         component = Component(content="Course Component: Lecture")
@@ -207,7 +193,7 @@ class TestComponentModel:
         comp = Component.try_parse("Course Component: Lecture")
         assert comp is not None
         assert "Course Component" in comp.content
-        
+
         # French component
         comp_fr = Component.try_parse("Volet : Cours magistral")
         assert comp_fr is not None
@@ -218,7 +204,7 @@ class TestComponentModel:
         # Should return None for non-component text
         result = Component.try_parse("This is course description content")
         assert result is None
-        
+
         result = Component.try_parse("Prerequisite: CSI2520")
         assert result is None
 
@@ -227,7 +213,7 @@ class TestComponentModel:
         # Empty string
         result = Component.try_parse("")
         assert result is None
-        
+
         # Case sensitivity (current implementation is case-sensitive)
         result = Component.try_parse("course component: Laboratory")
         assert result is None  # Current implementation requires exact case
@@ -236,11 +222,11 @@ class TestComponentModel:
         """Test parsing different component types."""
         components = [
             "Course Component: Lecture",
-            "Course Component: Laboratory", 
+            "Course Component: Laboratory",
             "Course Component: Tutorial",
-            "Course Component: Seminar"
+            "Course Component: Seminar",
         ]
-        
+
         for comp_text in components:
             comp = Component.try_parse(comp_text)
             assert comp is not None
@@ -249,19 +235,19 @@ class TestComponentModel:
 
 class TestModelIntegration:
     """Test integration between different models."""
-    
+
     def test_course_with_parsed_prerequisites_and_components(self):
         """Test Course creation with parsed prerequisites and components."""
         # Simulate parsing prerequisites and components
         prereq_text = "Prerequisite: CSI2520, CSI2101"
         comp_text = "Course Component: Lecture"
-        
+
         prereq = Prerequisite.try_parse(prereq_text)
         comp = Component.try_parse(comp_text)
-        
+
         assert prereq is not None
         assert comp is not None
-        
+
         # Create course with parsed data
         course = Course(
             course_code="CSI3140",
@@ -269,9 +255,9 @@ class TestModelIntegration:
             credits=3,
             description="Web development course",
             prerequisites=prereq.content,
-            components=["LECTURE"]  # Extracted from component
+            components=["LECTURE"],  # Extracted from component
         )
-        
+
         assert course.prerequisites == prereq_text
         assert "LECTURE" in course.components
 
@@ -280,16 +266,16 @@ class TestModelIntegration:
         subject = Subject(
             subject="Computer Science",
             subject_code="CSI",
-            link="https://catalogue.uottawa.ca/en/courses/csi/"
+            link="https://catalogue.uottawa.ca/en/courses/csi/",
         )
-        
+
         course = Course(
             course_code="CSI3140",
             title="Web Programming",
             credits=3,
-            description="Course from " + subject.subject + " department"
+            description="Course from " + subject.subject + " department",
         )
-        
+
         # Verify course code starts with subject code
         assert course.course_code.startswith(subject.subject_code)
         assert subject.subject in course.description
@@ -297,34 +283,34 @@ class TestModelIntegration:
     def test_model_json_compatibility(self):
         """Test that models can be serialized to JSON-compatible format."""
         import json
-        
+
         # Test Subject
         subject = Subject(
             subject="Computer Science",
             subject_code="CSI",
-            link="https://catalogue.uottawa.ca/en/courses/csi/"
+            link="https://catalogue.uottawa.ca/en/courses/csi/",
         )
         subject_json = json.dumps(subject.dict())
         assert "Computer Science" in subject_json
-        
-        # Test Course  
+
+        # Test Course
         course = Course(
-            course_code="CSI3140",
-            title="Web Programming",
-            credits=3,
-            description="Test course"
+            course_code="CSI3140", title="Web Programming", credits=3, description="Test course"
         )
         course_json = json.dumps(course.dict())
         assert "CSI3140" in course_json
 
-    @pytest.mark.parametrize("course_code,expected_valid", [
-        ("CSI3140", True),
-        ("MAT1320", True),
-        ("PHY1321", True),
-        ("", False),  # Empty string
-        ("123", False),  # Numbers only
-        ("TOOLONG1234", True),  # Long but valid
-    ])
+    @pytest.mark.parametrize(
+        "course_code,expected_valid",
+        [
+            ("CSI3140", True),
+            ("MAT1320", True),
+            ("PHY1321", True),
+            ("", False),  # Empty string
+            ("123", False),  # Numbers only
+            ("TOOLONG1234", True),  # Long but valid
+        ],
+    )
     def test_course_code_patterns(self, course_code, expected_valid):
         """Test various course code patterns."""
         if expected_valid:
@@ -333,7 +319,7 @@ class TestModelIntegration:
                 course_code=course_code,
                 title="Test Course",
                 credits=3,
-                description="Test description"
+                description="Test description",
             )
             assert course.course_code == course_code
         else:
@@ -341,9 +327,9 @@ class TestModelIntegration:
             # (Pydantic doesn't validate course code format by default)
             course = Course(
                 course_code=course_code,
-                title="Test Course", 
+                title="Test Course",
                 credits=3,
-                description="Test description"
+                description="Test description",
             )
             # This test shows that basic validation passes
             # For stricter validation, we'd need custom validators

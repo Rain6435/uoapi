@@ -3,13 +3,13 @@ Data models for Carleton University course discovery
 """
 
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
-import json
+from typing import List, Dict, Any
 
 
 @dataclass
 class MeetingTime:
     """Course meeting time information"""
+
     start_date: str
     end_date: str
     days: str
@@ -20,6 +20,7 @@ class MeetingTime:
 @dataclass
 class CourseSection:
     """Individual course section details"""
+
     crn: str
     section: str
     status: str
@@ -33,6 +34,7 @@ class CourseSection:
 @dataclass
 class Course:
     """Complete course information"""
+
     course_code: str
     subject_code: str
     course_number: str
@@ -50,6 +52,7 @@ class Course:
 @dataclass
 class TermResult:
     """Results for a complete term discovery"""
+
     term_code: str
     term_name: str
     session_id: str
@@ -67,9 +70,11 @@ class TermResult:
 
 def to_json_serializable(obj):
     """Convert dataclass objects to JSON-serializable format"""
-    if hasattr(obj, '__dataclass_fields__'):
-        return {field.name: to_json_serializable(getattr(obj, field.name)) 
-                for field in obj.__dataclass_fields__.values()}
+    if hasattr(obj, "__dataclass_fields__"):
+        return {
+            field.name: to_json_serializable(getattr(obj, field.name))
+            for field in obj.__dataclass_fields__.values()
+        }
     elif isinstance(obj, list):
         return [to_json_serializable(item) for item in obj]
     elif isinstance(obj, dict):
@@ -82,8 +87,5 @@ def format_output(data, messages=None):
     """Format output in uoapi standard format"""
     if messages is None:
         messages = []
-    
-    return {
-        "data": to_json_serializable(data) if data else [],
-        "messages": messages
-    }
+
+    return {"data": to_json_serializable(data) if data else [], "messages": messages}

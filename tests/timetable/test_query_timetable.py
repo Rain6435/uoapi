@@ -8,7 +8,8 @@ from httmock import urlmatch, HTTMock
 import uoapi.timetable.query_timetable as qt
 from uoapi.timetable import available
 
-#@TODO Test accented characters on various systems
+
+# @TODO Test accented characters on various systems
 # e.g. accented characters/encoding caused tests to
 # fail on my Windows 10 laptop
 def absolute_path(path):
@@ -49,11 +50,9 @@ class MockServer:
         if "GET" == request.method:
             if self.record_get is not None:
                 self.record_get += 1
-            return {"status_code": self.status_code,
-                    "content": self.get_response}
+            return {"status_code": self.status_code, "content": self.get_response}
         elif "POST" == request.method:
-            return {"status_code": self.status_code,
-                    "content": self.post_response}
+            return {"status_code": self.status_code, "content": self.post_response}
         else:
             raise NotImplementedError("Only GET and POST responses implemented")
 
@@ -73,8 +72,7 @@ class MockServer:
 
 class TestTimetableQuery(unittest.TestCase):
 
-    default_headers = {'Content-Type':"application/x-www-form-urlencoded"}
-
+    default_headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
     def setUp(self):
         self.mock_server = MockServer()
@@ -105,10 +103,13 @@ class TestTimetableQuery(unittest.TestCase):
             self.assertRaises(Exception, self.tq.refresh)
             r, m = self.tq(2020, "winter", "mat", 3121)
             self.assertEqual(r, "")
-            self.assertIn({
-                "type": "error",
-                "message": "2020_winter_mat_3121: Could not connect to school server",
-            }, m)
+            self.assertIn(
+                {
+                    "type": "error",
+                    "message": "2020_winter_mat_3121: Could not connect to school server",
+                },
+                m,
+            )
         with self.subTest("bad context status code"):
             self.mock_server.status_code = 400
             self.mock_server.swap_responses("GET", "good")
@@ -123,19 +124,25 @@ class TestTimetableQuery(unittest.TestCase):
                 with self.tq as messages:
                     self.check_in_context(False)
             self.check_in_context(False)
-            self.assertIn({
-                "type": "error",
-                "message": "ICSID not found",
-            }, messages)
+            self.assertIn(
+                {
+                    "type": "error",
+                    "message": "ICSID not found",
+                },
+                messages,
+            )
             self.mock_server.swap_responses("GET", "bad format")
             with HTTMock(self.mock_server.http_response):
                 with self.tq as messages:
                     self.check_in_context(False)
             self.check_in_context(False)
-            self.assertIn({
-                "type": "error",
-                "message": "GET page has unknown format",
-            }, messages)
+            self.assertIn(
+                {
+                    "type": "error",
+                    "message": "GET page has unknown format",
+                },
+                messages,
+            )
 
     def test_init(self):
         self.assertRaises(Exception, qt.TimetableQuery, "{blah}")
@@ -144,45 +151,60 @@ class TestTimetableQuery(unittest.TestCase):
         # Test failures
         with self.subTest("year"):
             self.assertRaisesRegex(
-                ValueError, "Year not valid", 
-                self.tq.normalize_args, qt.ErrorMessenger(),
-                3, "winter", "mat", 3121
+                ValueError,
+                "Year not valid",
+                self.tq.normalize_args,
+                qt.ErrorMessenger(),
+                3,
+                "winter",
+                "mat",
+                3121,
             )
         with self.subTest("term"):
             self.assertRaisesRegex(
-                ValueError, "Term not valid", 
-                self.tq.normalize_args, qt.ErrorMessenger(),
-                2020, 2, "mat", 3121
+                ValueError,
+                "Term not valid",
+                self.tq.normalize_args,
+                qt.ErrorMessenger(),
+                2020,
+                2,
+                "mat",
+                3121,
             )
         # Test for valid (year, term) not available in test_call
         with self.subTest("code"):
             self.assertRaisesRegex(
-                ValueError, "not a valid query",
-                self.tq.normalize_args, qt.ErrorMessenger(),
-                2020, "winter", 189, 3121
+                ValueError,
+                "not a valid query",
+                self.tq.normalize_args,
+                qt.ErrorMessenger(),
+                2020,
+                "winter",
+                189,
+                3121,
             )
         # Test success
         with self.subTest("course"):
             self.assertEqual(
                 self.tq.normalize_args(qt.ErrorMessenger(), 2020, "winter", "mat", 3121),
-                ("2201", "course", "MAT", "3121")
+                ("2201", "course", "MAT", "3121"),
             )
         with self.subTest("subject:year"):
             self.assertEqual(
                 self.tq.normalize_args(qt.ErrorMessenger(), 2020, "winter", "mat", 4),
-                ("2201", "subject:year", "MAT", "4")
+                ("2201", "subject:year", "MAT", "4"),
             )
         with self.subTest("subject:year:comp"):
             self.assertEqual(
                 self.tq.normalize_args(qt.ErrorMessenger(), 2020, "winter", "phy", ">1300"),
-                ("2201", "subject:year:comp", "PHY", ">1300")
+                ("2201", "subject:year:comp", "PHY", ">1300"),
             )
 
     def test_format_form(self):
         # Test "closed" sections being queried
-        #@TODO
+        # @TODO
         # Test "course" search
-        with self.subTest("\"course\" search"):
+        with self.subTest('"course" search'):
             self.tq.format_form(qt.ErrorMessenger(), 2020, "winter", "mat", 3121)
             # Check if desired keys are set
             for key, val in (
@@ -193,81 +215,61 @@ class TestTimetableQuery(unittest.TestCase):
                 self.assertEqual(self.tq.form[key], val)
             # Check if other keys are not set
             for i in "1234":
-                self.assertEqual(self.tq.form[
-                    "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)
-                ], "N")
+                self.assertEqual(
+                    self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)], "N"
+                )
                 self.assertNotIn(
                     "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$0".format(i),
                     self.tq.form,
                 )
             self.assertNotIn("UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$chk$0", self.tq.form)
             self.assertNotIn("UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$0", self.tq.form)
-        with self.subTest("\"subject:year\" search"):
+        with self.subTest('"subject:year" search'):
             self.tq.format_form(qt.ErrorMessenger(), 2020, "winter", "mat", 4)
             # Check if desired keys are set
-            self.assertEqual(self.tq.form[
-                "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_04$chk$0"
-            ], "Y")
-            self.assertEqual(self.tq.form[
-                "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_04$0"
-            ], "Y")
+            self.assertEqual(self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_04$chk$0"], "Y")
+            self.assertEqual(self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_04$0"], "Y")
             # Check if other keys are not set
-            self.assertEqual(self.tq.form[
-                "SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$0"
-            ], "E")
+            self.assertEqual(self.tq.form["SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$0"], "E")
             self.assertNotIn("SSR_CLSRCH_WRK_CATALOG_NBR$0", self.tq.form)
             for i in "123":
-                self.assertEqual(self.tq.form[
-                    "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)
-                ], "N")
+                self.assertEqual(
+                    self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)], "N"
+                )
                 self.assertNotIn(
                     "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$0".format(i),
                     self.tq.form,
                 )
             self.assertNotIn("UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$chk$0", self.tq.form)
             self.assertNotIn("UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$0", self.tq.form)
-        with self.subTest("\"subject:year\" search (graduate)"):
+        with self.subTest('"subject:year" search (graduate)'):
             self.tq.format_form(qt.ErrorMessenger(), 2020, "winter", "mat", 5)
             # Check if desired keys are set
-            self.assertEqual(self.tq.form[
-                "UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$chk$0"
-            ], "Y")
-            self.assertEqual(self.tq.form[
-                "UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$0"
-            ], "Y")
+            self.assertEqual(self.tq.form["UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$chk$0"], "Y")
+            self.assertEqual(self.tq.form["UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$0"], "Y")
             # Check if other keys are not set
-            self.assertEqual(self.tq.form[
-                "SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$0"
-            ], "E")
+            self.assertEqual(self.tq.form["SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$0"], "E")
             self.assertNotIn("SSR_CLSRCH_WRK_CATALOG_NBR$0", self.tq.form)
             for i in "1234":
-                self.assertEqual(self.tq.form[
-                    "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)
-                ], "N")
+                self.assertEqual(
+                    self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)], "N"
+                )
                 self.assertNotIn(
                     "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$0".format(i),
                     self.tq.form,
                 )
-        with self.subTest("\"subject:year:comp\" search"):
+        with self.subTest('"subject:year:comp" search'):
             self.tq.format_form(qt.ErrorMessenger(), 2020, "winter", "phy", ">1300")
             # Check if desired keys are set
-            self.assertEqual(self.tq.form[
-                "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_01$chk$0"
-            ], "Y")
-            self.assertEqual(self.tq.form[
-                "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_01$0"
-            ], "Y")
-            self.assertEqual(self.tq.form[
-                "SSR_CLSRCH_WRK_CATALOG_NBR$0"
-            ], "1300")
-            self.assertEqual(self.tq.form[
-                "SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$0"
-            ], "G")
+            self.assertEqual(self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_01$chk$0"], "Y")
+            self.assertEqual(self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_01$0"], "Y")
+            self.assertEqual(self.tq.form["SSR_CLSRCH_WRK_CATALOG_NBR$0"], "1300")
+            self.assertEqual(self.tq.form["SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$0"], "G")
             # Check if other keys are not set
             for i in "234":
-                self.assertEqual(self.tq.form[
-                    "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)
-                ], "N")
+                self.assertEqual(
+                    self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)], "N"
+                )
                 self.assertNotIn(
                     "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$0".format(i),
                     self.tq.form,
@@ -281,12 +283,13 @@ class TestTimetableQuery(unittest.TestCase):
         with HTTMock(self.mock_server.http_response):
             self.assertEqual(
                 available()["available"],
-                [{
-                    "year": 2020,
-                    "term": "winter",
-                }]
+                [
+                    {
+                        "year": 2020,
+                        "term": "winter",
+                    }
+                ],
             )
-
 
     def test_call(self):
         with self.subTest("bad input"):
@@ -296,11 +299,14 @@ class TestTimetableQuery(unittest.TestCase):
                 response, messages = self.tq(4, "winter", "mat", 3121)
             self.assertEqual(response, "")
             messages += gm
-            self.assertIn({
-                "type": "error",
-                "message": "4_winter_mat_3121: Year not valid",
-                "exc_info": True,
-            }, messages)
+            self.assertIn(
+                {
+                    "type": "error",
+                    "message": "4_winter_mat_3121: Year not valid",
+                    "exc_info": True,
+                },
+                messages,
+            )
         with self.subTest("bad status code"):
             self.mock_server.status_code = 200
             self.mock_server.swap_responses("GET", "good")
@@ -311,10 +317,13 @@ class TestTimetableQuery(unittest.TestCase):
                     response, messages = self.tq(2020, "winter", "mat", 3121)
             self.assertEqual(response, "")
             messages += gm
-            self.assertIn({
-                "type": "error",
-                "message": "2020_winter_mat_3121: POST error: 400",
-            }, messages)
+            self.assertIn(
+                {
+                    "type": "error",
+                    "message": "2020_winter_mat_3121: POST error: 400",
+                },
+                messages,
+            )
         with self.subTest("bad response"):
             # Check for unkown errors
             self.mock_server.status_code = 200
@@ -325,10 +334,13 @@ class TestTimetableQuery(unittest.TestCase):
                     response, messages = self.tq(2020, "winter", "mat", 3121)
             self.assertEqual(response, "")
             messages += gm
-            self.assertIn({
-                "type": "error",
-                "message": "2020_winter_mat_3121: Unknown error in query response",
-            }, messages)
+            self.assertIn(
+                {
+                    "type": "error",
+                    "message": "2020_winter_mat_3121: Unknown error in query response",
+                },
+                messages,
+            )
             # Check for no classes found
             self.mock_server.status_code = 200
             self.mock_server.swap_responses("GET", "good")
@@ -338,10 +350,13 @@ class TestTimetableQuery(unittest.TestCase):
                     response, messages = self.tq(2020, "winter", "mat", 3121)
             self.assertEqual(response, "")
             messages += gm
-            self.assertIn({
-                "type": "warning",
-                "message": "2020_winter_mat_3121: No classes found",
-            }, messages)
+            self.assertIn(
+                {
+                    "type": "warning",
+                    "message": "2020_winter_mat_3121: No classes found",
+                },
+                messages,
+            )
             # Check for too many sections found
             self.mock_server.status_code = 200
             self.mock_server.swap_responses("GET", "good")
@@ -351,10 +366,13 @@ class TestTimetableQuery(unittest.TestCase):
                     response, messages = self.tq(2020, "winter", "mat", 3121)
             self.assertEqual(response, "")
             messages += gm
-            self.assertIn({
-                "type": "error",
-                "message": "2020_winter_mat_3121: Exceeded maximum number of sections",
-            }, messages)
+            self.assertIn(
+                {
+                    "type": "error",
+                    "message": "2020_winter_mat_3121: Exceeded maximum number of sections",
+                },
+                messages,
+            )
         with self.subTest("good response"):
             self.mock_server.status_code = 200
             self.mock_server.swap_responses("GET", "good")
@@ -364,10 +382,13 @@ class TestTimetableQuery(unittest.TestCase):
                     response, messages = self.tq(2020, "winter", "mat", 3121)
             self.assertEqual(response, self.mock_server.post_response)
             messages += gm
-            self.assertIn({
-                "type": "success",
-                "message": "2020_winter_mat_3121: POST success",
-            }, messages)
+            self.assertIn(
+                {
+                    "type": "success",
+                    "message": "2020_winter_mat_3121: POST success",
+                },
+                messages,
+            )
         with self.subTest("semester not available"):
             self.mock_server.status_code = 200
             self.mock_server.swap_responses("GET", "good")
@@ -377,10 +398,13 @@ class TestTimetableQuery(unittest.TestCase):
                     response, messages = self.tq(2020, "fall", "mat", 3120)
             self.assertEqual(response, self.mock_server.post_response)
             messages += gm
-            self.assertIn({
-                "type": "warning",
-                "message": "2020_fall_mat_3120: Semester may not be available: fall",
-            }, messages)
+            self.assertIn(
+                {
+                    "type": "warning",
+                    "message": "2020_fall_mat_3120: Semester may not be available: fall",
+                },
+                messages,
+            )
         with self.subTest("refresh connection"):
             self.mock_server.status_code = 200
             self.mock_server.swap_responses("GET", "record")
@@ -420,9 +444,7 @@ class TestTimetableParse(unittest.TestCase):
     def test_course_examples(self):
         with open(absolute_path("data/examples.tsv"), "r") as f:
             examples = [
-                re.split("\t+", x.strip())
-                for x in f.readlines()
-                if not x.strip().startswith("#")
+                re.split("\t+", x.strip()) for x in f.readlines() if not x.strip().startswith("#")
             ]
         for example in examples:
             with self.subTest(example.pop(-1)):
@@ -431,4 +453,3 @@ class TestTimetableParse(unittest.TestCase):
                     "ignore": True,
                 }.get(example[-1].strip().lower(), False)
                 self.check_parsed(*example)
-
