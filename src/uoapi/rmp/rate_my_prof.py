@@ -3,12 +3,16 @@ from ratemyprofessor import School, get_professor_by_school_and_name
 import re
 
 
-SCHOOLS = {
-    "university of ottawa": School(1452, "University of Ottawa"),
-    "carleton university": School(1420, "Carleton University"),
-    "uottawa": School(1452, "University of Ottawa"),
-    "carleton": School(1420, "Carleton University"),
+# Store school IDs and names, create School objects lazily
+SCHOOL_DATA = {
+    "university of ottawa": (1452, "University of Ottawa"),
+    "carleton university": (1420, "Carleton University"),
+    "uottawa": (1452, "University of Ottawa"),
+    "carleton": (1420, "Carleton University"),
 }
+
+# Cache for created School objects
+_school_cache = {}
 
 
 def get_school_by_name(school_name: str) -> Optional[School]:
@@ -22,7 +26,31 @@ def get_school_by_name(school_name: str) -> Optional[School]:
         School object if found, None otherwise
     """
     normalized_name = school_name.lower().strip()
-    return SCHOOLS.get(normalized_name)
+    
+    if normalized_name not in SCHOOL_DATA:
+        return None
+    
+    # Check cache first
+    if normalized_name in _school_cache:
+        return _school_cache[normalized_name]
+    
+    # Create School object
+    school_id, school_name_formal = SCHOOL_DATA[normalized_name]
+    try:
+        # Try the constructor with both parameters
+        school = School(school_id, school_name_formal)
+    except TypeError:
+        # Fallback: try with just the ID (some versions may not accept name)
+        try:
+            school = School(school_id)
+        except Exception:
+            return None
+    except Exception:
+        return None
+    
+    # Cache the result
+    _school_cache[normalized_name] = school
+    return school
 
 
 def get_professor_ratings(professors: List[tuple], school_name: str) -> List[Dict]:
