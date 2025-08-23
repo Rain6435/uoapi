@@ -23,7 +23,7 @@ pip install schedulo-api
 
 Or install from source:
 ```bash
-pip install git+https://github.com/Rain6435/uoapi.git@carleton
+pip install git+https://github.com/Rain6435/uoapi.git@dev
 ```
 
 ## Usage
@@ -31,32 +31,32 @@ pip install git+https://github.com/Rain6435/uoapi.git@carleton
 ### University of Ottawa
 ```bash
 # Get course timetables
-uoapi timetable --term winter --year 2020 CSI3104 PHY4 YDD
+schedulo-api timetable --term winter --year 2020 CSI3104 PHY4 YDD
 
 # Get course information
-uoapi course --courses MAT PHY
-uoapi course --nosubjects CSI3105 CSI3131
+schedulo-api course --courses MAT PHY
+schedulo-api course --nosubjects CSI3105 CSI3131
 
 # Get important academic dates
-uoapi dates
+schedulo-api dates
 
 # Rate My Professor data
-uoapi rmp --school "University of Ottawa" --instructor "John Doe"
+schedulo-api rmp --school "University of Ottawa" --instructor "John Doe"
 ```
 
 ### Carleton University (NEW!)
 ```bash
 # Get available terms
-uoapi carleton --available-terms
+schedulo-api carleton --available-terms
 
 # List all subjects
-uoapi carleton --subjects
+schedulo-api carleton --subjects
 
 # Get courses for specific subjects
-uoapi carleton --courses COMP MATH
+schedulo-api carleton --courses COMP MATH
 
 # Search specific courses with real-time availability
-uoapi carleton --courses COMP1405 MATH1007
+schedulo-api carleton --courses COMP1405 MATH1007
 ```
 
 ### Output Format

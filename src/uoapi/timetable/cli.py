@@ -108,9 +108,9 @@ def parser(default):
     default.add_argument(
         "--school",
         action="store",
-        required=True,
+        required=False,
         choices=["University of Ottawa", "Carleton University", "uottawa", "carleton"],
-        help="school name for rating lookup (required)",
+        help="school name for rating lookup (required when using --include-ratings)",
     )
     return default
 
@@ -147,6 +147,9 @@ def cli(args=None):
         sys.exit(1)
     elif len(args.courses) == 0:
         print("Did not receive any queries", file=sys.stderr)
+        sys.exit(1)
+    elif args.include_ratings and args.school is None:
+        print("--school is required when using --include-ratings", file=sys.stderr)
         sys.exit(1)
     else:
         args.waittime = max(0, args.waittime)
@@ -203,8 +206,8 @@ def main(
     include_ratings=False,
     school=None,
 ):
-    if school is None:
-        raise ValueError("School parameter is required")
+    if include_ratings and school is None:
+        raise ValueError("School parameter is required when using --include-ratings")
 
     if saveraw is not None and os.path.isdir(saveraw):
         saveraw = os.path.join(saveraw, __version__, str(year), str(term))

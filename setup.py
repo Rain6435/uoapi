@@ -76,7 +76,7 @@ setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
     entry_points={
-        "console_scripts": ["uoapi=uoapi.cli:cli"],
+        "console_scripts": ["schedulo-api=uoapi.cli:cli"],
     },
     install_requires=REQUIRED,
     extras_require=EXTRAS,
