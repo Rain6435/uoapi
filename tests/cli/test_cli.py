@@ -108,7 +108,7 @@ class TestMainCli:
                     break
 
         # Should have at least some expected subcommands
-        expected_commands = ["course", "timetable", "dates", "rmp", "carleton"]
+        expected_commands = ["course", "timetable", "rmp", "carleton"]
         for cmd in expected_commands:
             if cmd in subcommands:  # Some may not be available in test environment
                 assert cmd in subcommands
@@ -244,7 +244,6 @@ class TestCliIntegration:
     [
         ("course", "course"),
         ("timetable", "timetable"),
-        ("dates", "dates"),
         ("rmp", "rmp"),
         ("carleton", "carleton"),
     ],

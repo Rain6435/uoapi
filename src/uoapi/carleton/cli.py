@@ -181,6 +181,33 @@ def cli(args=None):
         print(json.dumps(output))
         sys.exit(1)
 
+    # Validate that the requested term is available
+    try:
+        available_terms = discovery.get_available_terms()
+        available_term_codes = [term[0] for term in available_terms]
+        
+        if term_code not in available_term_codes:
+            # Get available term names for user-friendly error message
+            available_term_names = [term[1] for term in available_terms]
+            output = format_output(
+                None, 
+                [
+                    {
+                        "type": "error", 
+                        "message": f"Term {args.term} {args.year} (code: {term_code}) is not available for query"
+                    },
+                    {
+                        "type": "info",
+                        "message": f"Available terms: {', '.join(available_term_names)}"
+                    }
+                ]
+            )
+            print(json.dumps(output))
+            sys.exit(1)
+    except Exception as e:
+        logger.warning(f"Could not validate term availability: {e}")
+        # Continue with the query - if the term is invalid, the subsequent API calls will fail with appropriate errors
+
     # Handle subjects listing
     if args.subjects:
         try:
