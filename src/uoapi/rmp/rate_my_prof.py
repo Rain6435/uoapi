@@ -8,31 +8,34 @@ GRAPHQL_ENDPOINT = "https://www.ratemyprofessors.com/graphql"
 
 HEADERS = {
     "Authorization": "Basic dGVzdDp0ZXN0",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-    "Content-Type": "application/json"
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+    ),
+    "Content-Type": "application/json",
 }
 
 # Store school IDs and GraphQL IDs for Canadian universities
 SCHOOL_DATA = {
     "university of ottawa": {
-        "legacy_id": 1452, 
-        "graphql_id": "U2Nob29sLTE0NTI=", 
-        "name": "University of Ottawa"
+        "legacy_id": 1452,
+        "graphql_id": "U2Nob29sLTE0NTI=",
+        "name": "University of Ottawa",
     },
     "carleton university": {
-        "legacy_id": 1420, 
-        "graphql_id": "U2Nob29sLTE0MjA=", 
-        "name": "Carleton University"
+        "legacy_id": 1420,
+        "graphql_id": "U2Nob29sLTE0MjA=",
+        "name": "Carleton University",
     },
     "uottawa": {
-        "legacy_id": 1452, 
-        "graphql_id": "U2Nob29sLTE0NTI=", 
-        "name": "University of Ottawa"
+        "legacy_id": 1452,
+        "graphql_id": "U2Nob29sLTE0NTI=",
+        "name": "University of Ottawa",
     },
     "carleton": {
-        "legacy_id": 1420, 
-        "graphql_id": "U2Nob29sLTE0MjA=", 
-        "name": "Carleton University"
+        "legacy_id": 1420,
+        "graphql_id": "U2Nob29sLTE0MjA=",
+        "name": "Carleton University",
     },
 }
 
@@ -60,12 +63,12 @@ def get_school_by_name(school_name: str) -> Optional[Dict]:
         return _school_cache[normalized_name]
 
     school_info = SCHOOL_DATA[normalized_name]
-    
+
     # Create a simple school object with the information we need
     school_data = {
         "id": school_info["graphql_id"],
         "legacy_id": school_info["legacy_id"],
-        "name": school_info["name"]
+        "name": school_info["name"],
     }
 
     # Cache the result
@@ -76,16 +79,16 @@ def get_school_by_name(school_name: str) -> Optional[Dict]:
 def search_professor_graphql(first_name: str, last_name: str, school_id: str) -> Optional[Dict]:
     """
     Search for a professor using GraphQL API.
-    
+
     Args:
         first_name: Professor's first name
-        last_name: Professor's last name  
+        last_name: Professor's last name
         school_id: School's GraphQL ID
-        
+
     Returns:
         Professor data if found, None otherwise
     """
-    query = '''
+    query = """
     {
       newSearch {
         teachers(query: {text: "%s %s", schoolID: "%s"}, first: 5) {
@@ -109,41 +112,44 @@ def search_professor_graphql(first_name: str, last_name: str, school_id: str) ->
         }
       }
     }
-    ''' % (first_name, last_name, school_id)
-    
+    """ % (
+        first_name,
+        last_name,
+        school_id,
+    )
+
     try:
         response = requests.post(
-            GRAPHQL_ENDPOINT,
-            json={'query': query},
-            headers=HEADERS,
-            timeout=10
+            GRAPHQL_ENDPOINT, json={"query": query}, headers=HEADERS, timeout=10
         )
-        
+
         if response.status_code != 200:
             return None
-            
+
         data = response.json()
-        if 'errors' in data or not data.get('data'):
+        if "errors" in data or not data.get("data"):
             return None
-            
-        teachers = data['data']['newSearch']['teachers']['edges']
-        
+
+        teachers = data["data"]["newSearch"]["teachers"]["edges"]
+
         # Find exact match for the professor
         for teacher_edge in teachers:
-            teacher = teacher_edge['node']
-            teacher_first = teacher['firstName'].lower().strip()
-            teacher_last = teacher['lastName'].lower().strip()
-            
-            if (teacher_first == first_name.lower().strip() and 
-                teacher_last == last_name.lower().strip()):
+            teacher = teacher_edge["node"]
+            teacher_first = teacher["firstName"].lower().strip()
+            teacher_last = teacher["lastName"].lower().strip()
+
+            if (
+                teacher_first == first_name.lower().strip()
+                and teacher_last == last_name.lower().strip()
+            ):
                 return teacher
-                
+
         # If no exact match, return the first result if it exists
         if teachers:
-            return teachers[0]['node']
-            
+            return teachers[0]["node"]
+
         return None
-        
+
     except Exception:
         return None
 
@@ -230,26 +236,28 @@ def get_teachers_ratings_by_school(
         # Instead of crashing, return a response indicating no ratings are available
         if professors is None:
             professors = []
-        
+
         # Return empty ratings for all professors
         empty_ratings = []
         for prof_tuple in professors:
             if len(prof_tuple) >= 2:
                 first_name, last_name = prof_tuple[0], prof_tuple[1]
-                empty_ratings.append({
-                    "name": f"{first_name} {last_name}",
-                    "rating": None,
-                    "num_ratings": 0,
-                    "department": None,
-                    "rmp_id": None,
-                    "error": f"School '{school_name}' not supported or not found"
-                })
-        
+                empty_ratings.append(
+                    {
+                        "name": f"{first_name} {last_name}",
+                        "rating": None,
+                        "num_ratings": 0,
+                        "department": None,
+                        "rmp_id": None,
+                        "error": f"School '{school_name}' not supported or not found",
+                    }
+                )
+
         return {
-            "ratings": empty_ratings, 
-            "school_id": None, 
+            "ratings": empty_ratings,
+            "school_id": None,
             "school_name": school_name,
-            "error": f"School '{school_name}' not supported or not found"
+            "error": f"School '{school_name}' not supported or not found",
         }
 
     if professors is None:
@@ -257,11 +265,7 @@ def get_teachers_ratings_by_school(
 
     ratings = get_professor_ratings(professors, school_name)
 
-    return {
-        "ratings": ratings, 
-        "school_id": school["legacy_id"], 
-        "school_name": school["name"]
-    }
+    return {"ratings": ratings, "school_id": school["legacy_id"], "school_name": school["name"]}
 
 
 def parse_instructor_name(instructor_text: str) -> Optional[tuple]:
@@ -387,7 +391,9 @@ def inject_ratings_into_timetable(
                 enhanced_entry["instructor_num_ratings"] = rating_info["num_ratings"]
                 enhanced_entry["instructor_department"] = rating_info["department"]
                 enhanced_entry["instructor_rmp_id"] = rating_info["rmp_id"]
-                enhanced_entry["instructor_would_take_again_percent"] = rating_info["would_take_again_percent"]
+                enhanced_entry["instructor_would_take_again_percent"] = rating_info[
+                    "would_take_again_percent"
+                ]
                 enhanced_entry["instructor_avg_difficulty"] = rating_info["avg_difficulty"]
 
             # Handle nested structure - sections with components
@@ -417,9 +423,9 @@ def inject_ratings_into_timetable(
                                     "department"
                                 ]
                                 enhanced_component["instructor_rmp_id"] = rating_info["rmp_id"]
-                                enhanced_component["instructor_would_take_again_percent"] = rating_info[
-                                    "would_take_again_percent"
-                                ]
+                                enhanced_component["instructor_would_take_again_percent"] = (
+                                    rating_info["would_take_again_percent"]
+                                )
                                 enhanced_component["instructor_avg_difficulty"] = rating_info[
                                     "avg_difficulty"
                                 ]
