@@ -147,7 +147,8 @@ TAGS
 .vscode/
 
 # Assets folder - contains generated data files and logs
-assets/
+assets/*
+!assets/carleton_courses.json
 
 CLAUDE.md
 

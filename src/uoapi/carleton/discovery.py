@@ -77,10 +77,21 @@ class CarletonDiscovery:
 
     def _load_catalog(self):
         """Load catalog data"""
+        import os
+        
+        # Get the project root directory
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.join(current_dir, "..", "..", "..")
+        
         catalog_paths = [
             "carleton_courses.json",
-            "../carleton_courses.json",
+            "../carleton_courses.json", 
             "../../carleton_courses.json",
+            "assets/carleton_courses.json",
+            "../assets/carleton_courses.json",
+            "../../assets/carleton_courses.json",
+            "../../../assets/carleton_courses.json",
+            os.path.join(project_root, "assets", "carleton_courses.json"),
         ]
 
         for catalog_path in catalog_paths:
