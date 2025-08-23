@@ -79,3 +79,6 @@ version = {attr = "uoapi.__version__.__version__"}
 
 [tool.setuptools.package-data]
 "*" = ["*.txt", "*.md"]
+
+[tool.setuptools.data-files]
+"assets" = ["assets/carleton_courses.json"]
