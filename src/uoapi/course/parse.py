@@ -15,13 +15,13 @@ from uoapi.course.models import Subject, Prerequisite, Component
 def title_tag(tag: Union[Tag, NavigableString]) -> Tuple[str, str, int]:
     """
     Extract course code, title, and credits from a course block title tag.
-    
+
     Args:
         tag: BeautifulSoup tag containing course title information
-        
+
     Returns:
         Tuple of (course_code, title, credits)
-        
+
     Example:
         >>> tag = Tag(name='div')
         >>> tag.string = "CSI3140 World Wide Web Programming (3 credits)"
@@ -69,7 +69,7 @@ def subject_tag(tag: Tag, url_prefix: str):
             return Subject(
                 subject=subject,
                 subject_code=subject_code,
-                link=url_prefix + path + "/",  # pyright: ignore
+                link=url_prefix + path + "/",  # type: ignore  # pyright: ignore
             )
         case s, h:
             raise ValueError(f"Expected strings, got {type(s)} and {type(h)}")
@@ -91,9 +91,7 @@ def extras_blocks(tags: list[Tag]) -> tuple[str, str]:
     blocks: list[Prerequisite | Component] = []
 
     for tag in tags:
-        block = (
-            utils.replace_special_spaces(tag.text).strip(".").strip().strip(".").strip()
-        )
+        block = utils.replace_special_spaces(tag.text).strip(".").strip().strip(".").strip()
 
         if component := Component.try_parse(block):
             blocks.append(component)

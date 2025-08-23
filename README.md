@@ -131,7 +131,7 @@ Individual course section with scheduling:
     "meeting_times": [                     # Schedule information
         {
             "start_date": "2024-01-08",
-            "end_date": "2024-04-05", 
+            "end_date": "2024-04-05",
             "days": "MWF",
             "start_time": "10:05",
             "end_time": "11:25"
@@ -152,7 +152,7 @@ Full course with all sections:
     "catalog_credits": 0.5,               # Credit value
     "is_offered": true,                   # Availability status
     "sections_found": 3,                  # Number of sections
-    "banner_title": "Intro Computer Programming", 
+    "banner_title": "Intro Computer Programming",
     "banner_credits": 0.5,
     "sections": [...],                    # Array of CourseSection objects
     "error": false,
@@ -201,7 +201,7 @@ Text as scraped from university catalogs:
 - University of Ottawa: `"Prerequisite: CSI2520, CSI2101"`
 - Carleton: Usually embedded in course descriptions
 
-#### Parsed Dependencies  
+#### Parsed Dependencies
 Structured prerequisite relationships:
 ```python
 {

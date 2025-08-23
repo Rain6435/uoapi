@@ -23,7 +23,7 @@ Navigate to `Settings > Branches > Add rule` and configure the following for the
 - **Require branches to be up to date before merging**: ✓ Enabled
 - **Required status checks**:
   - `test (3.10)`
-  - `test (3.11)` 
+  - `test (3.11)`
   - `test (3.12)`
   - `build-package`
   - `integration-test` (if PR)
@@ -106,7 +106,7 @@ Create a `.github/CODEOWNERS` file to require specific people to review changes:
 # Python source code
 src/ @yourusername
 
-# CI/CD and workflows  
+# CI/CD and workflows
 .github/ @yourusername
 
 # Documentation

@@ -128,13 +128,13 @@ label[for='#ICDataLang']
 var intv = setInterval( function() {
    var i = 1;
    var l = document.getElementById('#ICDataLang');
-   if(l) { 
+   if(l) {
           var lng = 'CFR';
-          if(document.querySelector("label[for='#ICDataLang']").innerText.indexOf('Data') > -1) { 
+          if(document.querySelector("label[for='#ICDataLang']").innerText.indexOf('Data') > -1) {
              lng = 'ENG';
           }
-          i = 0; 					
-          if(l.value != lng) {				                        l.value = lng;					              l.onchange();  
+          i = 0;
+          if(l.value != lng) {				                        l.value = lng;					              l.onchange();
           }
    } else { i++; }
    if(i == 0 || i > 120) {clearInterval(intv);}

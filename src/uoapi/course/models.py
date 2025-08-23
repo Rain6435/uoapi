@@ -16,12 +16,13 @@ from pydantic import (
 class Subject(BaseModel):
     """
     Represents a subject/department at the University of Ottawa.
-    
+
     Attributes:
         subject: Full name of the subject (e.g., "Computer Science")
         subject_code: Short code for the subject (e.g., "CSI")
         link: URL to the subject's course listing page
     """
+
     subject: str = Field(..., description="Full name of the subject")
     subject_code: str = Field(..., description="Short code identifier")
     link: HttpUrl = Field(..., description="URL to course listing")
@@ -30,7 +31,7 @@ class Subject(BaseModel):
 class Course(BaseModel):
     """
     Represents a course at the University of Ottawa.
-    
+
     Attributes:
         course_code: Unique identifier for the course (e.g., "CSI3140")
         title: Human-readable course title
@@ -40,6 +41,7 @@ class Course(BaseModel):
         prerequisites: Text description of prerequisites
         dependencies: Parsed prerequisite dependencies as nested lists
     """
+
     course_code: str = Field(..., description="Course identifier (e.g., CSI3140)")
     title: str = Field(..., description="Course title")
     credits: int = Field(..., description="Number of credits", ge=0)
@@ -53,24 +55,25 @@ class Course(BaseModel):
 class Prerequisite(BaseModel):
     """
     Represents course prerequisite information.
-    
+
     This model is used to parse and store prerequisite text from
     course descriptions. Future refactoring should move parsing
     logic from the Prereq module into this class.
-    
+
     Attributes:
         content: Raw prerequisite text content
     """
+
     content: str = Field(..., description="Raw prerequisite text")
 
     @classmethod
-    def try_parse(cls, string: str) -> Optional['Prerequisite']:
+    def try_parse(cls, string: str) -> Optional["Prerequisite"]:
         """
         Attempt to parse prerequisite information from a string.
-        
+
         Args:
             string: Text that might contain prerequisite information
-            
+
         Returns:
             Prerequisite instance if found, None otherwise
         """
@@ -83,23 +86,24 @@ class Prerequisite(BaseModel):
 class Component(BaseModel):
     """
     Represents a course component (e.g., Lecture, Laboratory, Tutorial).
-    
+
     Future refactoring should move component parsing logic into
     this class to centralize component-related functionality.
-    
+
     Attributes:
         content: Raw component text content
     """
+
     content: str = Field(..., description="Raw component text")
 
     @classmethod
-    def try_parse(cls, string: str) -> Optional['Component']:
+    def try_parse(cls, string: str) -> Optional["Component"]:
         """
         Attempt to parse component information from a string.
-        
+
         Args:
             string: Text that might contain component information
-            
+
         Returns:
             Component instance if found, None otherwise
         """

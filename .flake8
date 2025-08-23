@@ -1,0 +1,25 @@
+[flake8]
+max-line-length = 100
+max-complexity = 10
+ignore =
+    # F401: Module imported but unused (common in __init__.py files for API exposure)
+    F401,
+    # E501: Line too long (handled by black formatter)
+    E501,
+    # C901: Function is too complex (would require significant refactoring)
+    C901,
+    # E203: Whitespace before ':' (conflicts with black formatter in some cases)
+    E203
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    .venv,
+    venv,
+    .pytest_cache
+per-file-ignores =
+    # Allow unused imports in __init__.py files (API exposure)
+    */__init__.py:F401
+    # Allow unused variables in test files
+    tests/*:F841

@@ -109,7 +109,7 @@ Located in `pytest.ini`:
 ```ini
 [coverage:run]
 source = src/
-omit = 
+omit =
     */tests/*
     */test_*
     */__pycache__/*
@@ -183,20 +183,20 @@ Tests are enforced via GitHub branch protection rules:
 ```python
 class TestModuleName:
     """Test suite for ModuleName functionality."""
-    
+
     def setup_method(self):
         """Set up test fixtures."""
         pass
-    
+
     def test_basic_functionality(self):
         """Test basic functionality works correctly."""
         pass
-    
+
     @pytest.mark.integration
     def test_integration_scenario(self):
         """Test integration with other components."""
         pass
-    
+
     @pytest.mark.parametrize("input,expected", [
         ("input1", "output1"),
         ("input2", "output2"),
