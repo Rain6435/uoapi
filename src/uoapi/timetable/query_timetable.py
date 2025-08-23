@@ -112,7 +112,9 @@ def require_context(method):
     def new_method(self, *args, **kwargs):
         if self.in_context:
             return method(self, *args, **kwargs)
-        raise Exception("This method can only be called while using its object in a context")
+        raise Exception(
+            "This method can only be called while using its object in a context"
+        )
 
     return new_method
 
@@ -160,7 +162,9 @@ class TimetableQuery:
     def __enter__(self):
         """Enter the context manager and initialize the session."""
         if self.session is not None:
-            raise Exception("Cannot enter this context manager if already successfully entered")
+            raise Exception(
+                "Cannot enter this context manager if already successfully entered"
+            )
         self.session = requests.Session()
         self.messages = messages = []
         self.in_context = True
@@ -218,9 +222,14 @@ class TimetableQuery:
         """Extract hidden form inputs from HTML response."""
         # Check if page is as expected
         msg = BeautifulSoup(text, "lxml").find(
-            lambda x: search_tag(x, "div", "id", "win0divDERIVED_CLSRCH_SSR_CLASS_LBLlbl")
+            lambda x: search_tag(
+                x, "div", "id", "win0divDERIVED_CLSRCH_SSR_CLASS_LBLlbl"
+            )
         )
-        if msg is None or msg.contents[0].contents[0].strip().lower() == "search results":
+        if (
+            msg is None
+            or msg.contents[0].contents[0].strip().lower() == "search results"
+        ):
             return None
         # If it is, return updates
         return BeautifulSoup(text, "html.parser").find_all("input", type="hidden")
@@ -294,7 +303,9 @@ class TimetableQuery:
         number: Union[int, str, bytes],
     ) -> dict:
         # Format inputs
-        semester, search, subject, number = self.normalize_args(em, year, term, subject, number)
+        semester, search, subject, number = self.normalize_args(
+            em, year, term, subject, number
+        )
         # Clearing form
         for i in set("12345"):
             self.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)] = "N"
@@ -332,7 +343,9 @@ class TimetableQuery:
                 self.form["UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$chk$0"] = "Y"
                 self.form["UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$0"] = "Y"
             else:
-                self.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(number)] = "Y"
+                self.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(number)] = (
+                    "Y"
+                )
                 self.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$0".format(number)] = "Y"
         # @TODO Add more search formats
         # elif ...:
@@ -352,10 +365,14 @@ class TimetableQuery:
                 em("warning", "Saving html failed", exc_info=True)
         response = BeautifulSoup(response, "lxml")
         # Failure modes
-        msg = response.find(lambda x: search_tag(x, "span", "id", "DERIVED_CLSMSG_ERROR_TEXT"))
+        msg = response.find(
+            lambda x: search_tag(x, "span", "id", "DERIVED_CLSMSG_ERROR_TEXT")
+        )
         # In some cases, this object is a field instead of a span
         if msg is None:
-            msg = response.find(lambda x: search_tag(x, "field", "id", "DERIVED_CLSMSG_ERROR_TEXT"))
+            msg = response.find(
+                lambda x: search_tag(x, "field", "id", "DERIVED_CLSMSG_ERROR_TEXT")
+            )
         if msg is not None:
             msg = msg.contents[0].strip().lower()
             if "no classes found" in msg:
@@ -367,9 +384,14 @@ class TimetableQuery:
         # @TODO Add failure modes
         # Expected
         msg = response.find(
-            lambda x: search_tag(x, "div", "id", "win0divDERIVED_CLSRCH_SSR_CLASS_LBLlbl")
+            lambda x: search_tag(
+                x, "div", "id", "win0divDERIVED_CLSRCH_SSR_CLASS_LBLlbl"
+            )
         )
-        if msg is not None and msg.contents[0].contents[0].strip().lower() == "search results":
+        if (
+            msg is not None
+            and msg.contents[0].contents[0].strip().lower() == "search results"
+        ):
             em("success", "Got search results")
             return True
         # Fall-through case
@@ -378,7 +400,8 @@ class TimetableQuery:
 
     def __call__(self, *args, **kwargs) -> Tuple[Union[str, bytes], List[dict]]:
         label = "_".join(
-            ["{}".format(x) for x in args] + ["{}-{}".format(k, v) for k, v in kwargs.items()]
+            ["{}".format(x) for x in args]
+            + ["{}-{}".format(k, v) for k, v in kwargs.items()]
         )
         em = ErrorMessenger(log=self.log, prefix=label)
         if self.refresh_count >= self.refresh_after > 0:
@@ -397,7 +420,11 @@ class TimetableQuery:
         except Exception as e:
             em(
                 "error",
-                e.args[0] if len(e.args) > 0 else "Unknown {} in format_form".format(type(e)),
+                (
+                    e.args[0]
+                    if len(e.args) > 0
+                    else "Unknown {} in format_form".format(type(e))
+                ),
                 exc_info=True,
             )
             success = False
@@ -423,13 +450,16 @@ class TimetableQuery:
                 if (
                     success
                     or len(em.msg_list) == 0
-                    or "Unknown error in query response" not in em.msg_list[-1]["message"]
+                    or "Unknown error in query response"
+                    not in em.msg_list[-1]["message"]
                 ):
                     logging.debug("; ".join(x["message"] for x in em.msg_list))
                     break
                 else:
                     logging.warning(
-                        label + ": " + "unknown error, possible stale connection, retrying..."
+                        label
+                        + ": "
+                        + "unknown error, possible stale connection, retrying..."
                     )
                     self.refresh()
         if success:
@@ -472,13 +502,21 @@ def search_tag(
 
 def tag_is_course(x):
     return search_tag(
-        x, "div", "id", "win0divSSR_CLSRSLT_WRK_GROUPBOX2$", lambda x, y: y.startswith(x)
+        x,
+        "div",
+        "id",
+        "win0divSSR_CLSRSLT_WRK_GROUPBOX2$",
+        lambda x, y: y.startswith(x),
     )
 
 
 def course_tag_is_title(x):
     return search_tag(
-        x, "div", "id", "win0divSSR_CLSRSLT_WRK_GROUPBOX2GP", lambda x, y: y.startswith(x)
+        x,
+        "div",
+        "id",
+        "win0divSSR_CLSRSLT_WRK_GROUPBOX2GP",
+        lambda x, y: y.startswith(x),
     )
 
 
@@ -526,7 +564,9 @@ def extract_section(section, descr, log=False, err_msg_prefix=""):
     section_name = section(section_tag_is_classname)[0].contents
     sec_id, sec_type = section_name[0].strip().upper(), section_name[-1].strip()
     id_, type_ = re.search(r"\s*([A-Z]*)\s*[0-9]*-\s*([A-Z]+)\s*", sec_id).groups()
-    status = section(lambda x: search_tag(x, "div", "id", "win0divDERIVED_CLSRCH_SSR_STATUS_LONG"))
+    status = section(
+        lambda x: search_tag(x, "div", "id", "win0divDERIVED_CLSRCH_SSR_STATUS_LONG")
+    )
     if len(status) > 0 and len(status[0]("img")) > 0:
         status = status[0]("img")[0].attrs.get("alt", "").strip().upper()
     else:
@@ -561,13 +601,16 @@ def extract_section(section, descr, log=False, err_msg_prefix=""):
         if len(s) != 2:
             em(
                 "debug" if len(s) < 2 else "info",
-                "Incorrect number of dates ({})".format(len(s)) + " found in string {}".format(i),
+                "Incorrect number of dates ({})".format(len(s))
+                + " found in string {}".format(i),
             )
         s += [""] * max(0, 2 - len(s))
         topic[i] = s
     dttms = [
         x.strip().split(" ", 1)
-        for x in section(lambda x: search_tag(x, "span", "id", "MTG_DAYTIME"))[0].contents
+        for x in section(lambda x: search_tag(x, "span", "id", "MTG_DAYTIME"))[
+            0
+        ].contents
         if isinstance(x, str)
     ]
     # Handle the case when the number of details differ between columns
@@ -597,8 +640,12 @@ def extract_section(section, descr, log=False, err_msg_prefix=""):
             "room": "",
             "instructor": normalize_whitespace(instrs[i]) if i < len(instrs) else "",
             "day": dttms[i][0].strip().upper() if i < len(dttms) else "",
-            "start_time": dttms[i][-1].strip().split("-")[0].strip() if i < len(dttms) else "",
-            "end_time": dttms[i][-1].strip().split("-")[-1].strip() if i < len(dttms) else "",
+            "start_time": (
+                dttms[i][-1].strip().split("-")[0].strip() if i < len(dttms) else ""
+            ),
+            "end_time": (
+                dttms[i][-1].strip().split("-")[-1].strip() if i < len(dttms) else ""
+            ),
             "start_date": topic[i][0] if i < len(topic) else "",
             "end_date": topic[i][1] if i < len(topic) else "",
             **section_out,
@@ -646,7 +693,9 @@ def extract_course(course, year, term, log=False):
         )
         course_out["sections"] += sections
         course_out["messages"] += messages
-    course_out["sections"] = group_by_eq(course_out["sections"], lambda x: x["section_id"])
+    course_out["sections"] = group_by_eq(
+        course_out["sections"], lambda x: x["section_id"]
+    )
     course_out["sections"] = [
         {
             "year": year,
@@ -702,7 +751,10 @@ def distribute_shared_sections(
                 continue
             section["components"] = section["components"] + bad_section["components"]
             bad_sec_ids.add(bad_section["label"])
-            em("debug", "Merged sections %s and %s" % (section["label"], bad_section["label"]))
+            em(
+                "debug",
+                "Merged sections %s and %s" % (section["label"], bad_section["label"]),
+            )
         sections_out.append(section)
     return sections_out
 

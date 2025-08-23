@@ -39,7 +39,8 @@ prereq = {
         % (faculties, faculties, faculties)
     ),
     "prerequisites": re.compile(
-        r"(?<=^(?:/ )?(?:Prerequisite|Préalable)s?\s*:\s*(?:One of )?)%s$" % parsable_codes
+        r"(?<=^(?:/ )?(?:Prerequisite|Préalable)s?\s*:\s*(?:One of )?)%s$"
+        % parsable_codes
     ),
     "corequisite": re.compile(
         r"(?:Corequisite|Concomitant)\s*:\s*%s|%s(?= are prerequisite or corequisite to %s$)|(?<=Les cours )%s(?= sont préalables ou concomitants à %s$)"
@@ -69,7 +70,8 @@ prereq = {
         r"Interview with Professor is required$|Entrevue avec le professeur est requise$"
     ),
     "also_offered_as": re.compile(
-        r"(?<=^(?:Also offered as |Aussi offert sous la cote ))%s$" % course_code_pattern
+        r"(?<=^(?:Also offered as |Aussi offert sous la cote ))%s$"
+        % course_code_pattern
     ),
     "primarily_intended_for": re.compile(
         r"[Tt]his course is .* for .*$|Ce cours .* principalement(?: destiné)? aux étudiants et étudiantes .*$"

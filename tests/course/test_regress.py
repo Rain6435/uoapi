@@ -64,4 +64,6 @@ def test_courses():
     for subject in course_data["subjects"]:
         with HTTMock(mock_subject_page(subject["link"], subject["page"])):
             results = list(get_courses(subject["link"]))
-            assert subject["courses"] == results, ("Differs from commit {}".format(commit),)
+            assert subject["courses"] == results, (
+                "Differs from commit {}".format(commit),
+            )

@@ -8,7 +8,11 @@ class Prereq:
     Object used to hold information about prereqs and other information that is provided in the courseblockextra section of the uOttawa catalogue
     """
 
-    rep_codes = {"credit_count": "YYY0000", "ForU": "YYY0001", "for_special_program": ") or ("}
+    rep_codes = {
+        "credit_count": "YYY0000",
+        "ForU": "YYY0001",
+        "for_special_program": ") or (",
+    }
 
     def parse_codes(self, parsable):
         """

@@ -65,7 +65,10 @@ def parser(default: argparse.ArgumentParser):
     )
 
     default.add_argument(
-        "--year", "-y", type=int, help="Year to query (required for --subjects and --courses)"
+        "--year",
+        "-y",
+        type=int,
+        help="Year to query (required for --subjects and --courses)",
     )
 
     # Options
@@ -78,10 +81,16 @@ def parser(default: argparse.ArgumentParser):
     )
 
     default.add_argument(
-        "--workers", "-w", type=int, default=4, help="Number of parallel workers (default: 4)"
+        "--workers",
+        "-w",
+        type=int,
+        default=4,
+        help="Number of parallel workers (default: 4)",
     )
 
-    default.add_argument("--cookie-file", help="Path to cookie file for Banner authentication")
+    default.add_argument(
+        "--cookie-file", help="Path to cookie file for Banner authentication"
+    )
 
     return default
 
@@ -129,9 +138,13 @@ def cli(args=None):
 
     # Initialize discovery system
     try:
-        discovery = CarletonDiscovery(max_workers=args.workers, cookie_file=args.cookie_file)
+        discovery = CarletonDiscovery(
+            max_workers=args.workers, cookie_file=args.cookie_file
+        )
     except Exception as e:
-        output = format_output(None, [{"type": "error", "message": f"Failed to initialize: {e}"}])
+        output = format_output(
+            None, [{"type": "error", "message": f"Failed to initialize: {e}"}]
+        )
         print(json.dumps(output))
         sys.exit(1)
 
@@ -161,7 +174,8 @@ def cli(args=None):
 
         except Exception as e:
             output = format_output(
-                None, [{"type": "error", "message": f"Failed to get available terms: {e}"}]
+                None,
+                [{"type": "error", "message": f"Failed to get available terms: {e}"}],
             )
             print(json.dumps(output))
             sys.exit(1)
@@ -169,7 +183,13 @@ def cli(args=None):
     # Validate term and year for other actions
     if not args.term or not args.year:
         output = format_output(
-            None, [{"type": "error", "message": "Term and year are required for this action"}]
+            None,
+            [
+                {
+                    "type": "error",
+                    "message": "Term and year are required for this action",
+                }
+            ],
         )
         print(json.dumps(output))
         sys.exit(1)
@@ -177,7 +197,9 @@ def cli(args=None):
     # Convert term and year to term code
     term_code = term_name_to_code(args.term, args.year)
     if not term_code:
-        output = format_output(None, [{"type": "error", "message": f"Invalid term: {args.term}"}])
+        output = format_output(
+            None, [{"type": "error", "message": f"Invalid term: {args.term}"}]
+        )
         print(json.dumps(output))
         sys.exit(1)
 
@@ -185,22 +207,22 @@ def cli(args=None):
     try:
         available_terms = discovery.get_available_terms()
         available_term_codes = [term[0] for term in available_terms]
-        
+
         if term_code not in available_term_codes:
             # Get available term names for user-friendly error message
             available_term_names = [term[1] for term in available_terms]
             output = format_output(
-                None, 
+                None,
                 [
                     {
-                        "type": "error", 
-                        "message": f"Term {args.term} {args.year} (code: {term_code}) is not available for query"
+                        "type": "error",
+                        "message": f"Term {args.term} {args.year} (code: {term_code}) is not available for query",
                     },
                     {
                         "type": "info",
-                        "message": f"Available terms: {', '.join(available_term_names)}"
-                    }
-                ]
+                        "message": f"Available terms: {', '.join(available_term_names)}",
+                    },
+                ],
             )
             print(json.dumps(output))
             sys.exit(1)
@@ -245,11 +267,19 @@ def cli(args=None):
             if not args.courses:
                 subjects, _ = discovery.discover_subjects(term_code)
                 query_subjects = list(subjects)
-                messages = [{"type": "info", "message": f"Querying all {len(subjects)} subjects"}]
+                messages = [
+                    {
+                        "type": "info",
+                        "message": f"Querying all {len(subjects)} subjects",
+                    }
+                ]
             else:
                 query_subjects = [s.upper() for s in args.courses]
                 messages = [
-                    {"type": "info", "message": f"Querying subjects: {', '.join(query_subjects)}"}
+                    {
+                        "type": "info",
+                        "message": f"Querying subjects: {', '.join(query_subjects)}",
+                    }
                 ]
 
             # Discover courses
@@ -285,7 +315,10 @@ def cli(args=None):
 
             if error_courses:
                 messages.append(
-                    {"type": "warning", "message": f"{len(error_courses)} courses had errors"}
+                    {
+                        "type": "warning",
+                        "message": f"{len(error_courses)} courses had errors",
+                    }
                 )
 
             output = format_output(
@@ -296,7 +329,9 @@ def cli(args=None):
                     "total_courses": len(courses),
                     "courses_offered": len(offered_courses),
                     "courses_with_errors": len(error_courses),
-                    "offering_rate_percent": len(offered_courses) / max(1, len(courses)) * 100,
+                    "offering_rate_percent": len(offered_courses)
+                    / max(1, len(courses))
+                    * 100,
                     "subject_statistics": subject_stats,
                     "courses": courses,
                 },

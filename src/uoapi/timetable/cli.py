@@ -224,11 +224,15 @@ def main(
                     resp, msgs = tq(year, term, subj, code)
                 except Exception as e:
                     logging.debug(
-                        "Failed to query {} {}, {}{}: {}".format(term, year, subj, code, repr(e)),
+                        "Failed to query {} {}, {}{}: {}".format(
+                            term, year, subj, code, repr(e)
+                        ),
                         exc_info=True,
                     )
                     logging.error(
-                        "Failed to query {} {}, {}{}: {}".format(term, year, subj, code, repr(e))
+                        "Failed to query {} {}, {}{}: {}".format(
+                            term, year, subj, code, repr(e)
+                        )
                     )
                     resp = ""
                     msgs = [
@@ -239,10 +243,14 @@ def main(
                     ]
                 if "" == resp:
                     out = []
-                    logging.warning("No data for {} {}, {}{}".format(term, year, subj, code))
+                    logging.warning(
+                        "No data for {} {}, {}{}".format(term, year, subj, code)
+                    )
                     # @TODO Handle different failure modes
                 else:
-                    logging.info("Got data for {} {}, {}{}".format(term, year, subj, code))
+                    logging.info(
+                        "Got data for {} {}, {}{}".format(term, year, subj, code)
+                    )
                     try:
                         out = list(qt.extract_timetable(resp, year, term, log=True))
                     except Exception as e:
@@ -263,7 +271,9 @@ def main(
                             "message": "Parser failure",
                         }
                     else:
-                        logging.info("Parsed data for {} {}, {}{}".format(term, year, subj, code))
+                        logging.info(
+                            "Parsed data for {} {}, {}{}".format(term, year, subj, code)
+                        )
 
                 # Prepare output data
                 output_data = {

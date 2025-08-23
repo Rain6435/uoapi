@@ -29,7 +29,9 @@ class TestSubjectModel:
     def test_subject_with_invalid_url(self):
         """Test Subject validation with invalid URL."""
         with pytest.raises(ValidationError):
-            Subject(subject="Computer Science", subject_code="CSI", link="not-a-valid-url")
+            Subject(
+                subject="Computer Science", subject_code="CSI", link="not-a-valid-url"
+            )
 
     def test_subject_required_fields(self):
         """Test that Subject requires all fields."""
@@ -88,12 +90,19 @@ class TestCourseModel:
     def test_course_credits_validation(self):
         """Test Course credits validation (must be >= 0)."""
         # Valid credits
-        course = Course(course_code="CSI1100", title="Test Course", credits=0, description="Test")
+        course = Course(
+            course_code="CSI1100", title="Test Course", credits=0, description="Test"
+        )
         assert course.credits == 0
 
         # Invalid negative credits
         with pytest.raises(ValidationError):
-            Course(course_code="CSI1100", title="Test Course", credits=-1, description="Test")
+            Course(
+                course_code="CSI1100",
+                title="Test Course",
+                credits=-1,
+                description="Test",
+            )
 
     def test_course_required_fields(self):
         """Test that Course requires all mandatory fields."""
@@ -295,7 +304,10 @@ class TestModelIntegration:
 
         # Test Course
         course = Course(
-            course_code="CSI3140", title="Web Programming", credits=3, description="Test course"
+            course_code="CSI3140",
+            title="Web Programming",
+            credits=3,
+            description="Test course",
         )
         course_json = json.dumps(course.dict())
         assert "CSI3140" in course_json

@@ -91,7 +91,9 @@ def extras_blocks(tags: list[Tag]) -> tuple[str, str]:
     blocks: list[Prerequisite | Component] = []
 
     for tag in tags:
-        block = utils.replace_special_spaces(tag.text).strip(".").strip().strip(".").strip()
+        block = (
+            utils.replace_special_spaces(tag.text).strip(".").strip().strip(".").strip()
+        )
 
         if component := Component.try_parse(block):
             blocks.append(component)

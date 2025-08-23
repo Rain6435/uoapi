@@ -45,7 +45,9 @@ def make_parser(**kwargs) -> Callable:
 
     def parser_decorator(function: Callable) -> Callable:
         @ft.wraps(function)
-        def parser(default: Optional[argparse.ArgumentParser] = None) -> argparse.ArgumentParser:
+        def parser(
+            default: Optional[argparse.ArgumentParser] = None,
+        ) -> argparse.ArgumentParser:
             if default is None:
                 default = argparse.ArgumentParser(**kwargs)
             return function(default)

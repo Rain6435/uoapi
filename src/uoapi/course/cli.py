@@ -15,7 +15,10 @@ from typing import List, Dict, Any
 from uoapi.cli_tools import make_parser, make_cli
 from uoapi.course import scrape_subjects, get_courses
 
-help = "A tool for querying the subjects available, " + "and the courses offered for each subject"
+help = (
+    "A tool for querying the subjects available, "
+    + "and the courses offered for each subject"
+)
 description = (
     "By default, lookup the subject table. "
     + "If given the --courses (-c) flag, lookup course information as well. "
@@ -48,7 +51,8 @@ def parser(default: argparse.ArgumentParser):
         metavar="XXX",
         nargs="*",
         help=(
-            "list of subjects to query courses " + "(if not provided, all subjects will be queried)"
+            "list of subjects to query courses "
+            + "(if not provided, all subjects will be queried)"
         ),
     )
     default.add_argument(

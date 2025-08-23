@@ -18,7 +18,10 @@ def parser(default):
         "--school",
         action="store",
         required=True,
-        help=("School name (University of Ottawa, Carleton University, " "uottawa, carleton)"),
+        help=(
+            "School name (University of Ottawa, Carleton University, "
+            "uottawa, carleton)"
+        ),
     )
     default.add_argument(
         "-p",

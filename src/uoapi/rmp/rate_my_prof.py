@@ -76,7 +76,9 @@ def get_school_by_name(school_name: str) -> Optional[Dict]:
     return school_data
 
 
-def search_professor_graphql(first_name: str, last_name: str, school_id: str) -> Optional[Dict]:
+def search_professor_graphql(
+    first_name: str, last_name: str, school_id: str
+) -> Optional[Dict]:
     """
     Search for a professor using GraphQL API.
 
@@ -183,7 +185,9 @@ def get_professor_ratings(professors: List[tuple], school_name: str) -> List[Dic
                         "rating": professor.get("avgRating"),
                         "num_ratings": professor.get("numRatings", 0),
                         "department": professor.get("department"),
-                        "would_take_again_percent": professor.get("wouldTakeAgainPercent"),
+                        "would_take_again_percent": professor.get(
+                            "wouldTakeAgainPercent"
+                        ),
                         "avg_difficulty": professor.get("avgDifficulty"),
                     }
                 )
@@ -265,7 +269,11 @@ def get_teachers_ratings_by_school(
 
     ratings = get_professor_ratings(professors, school_name)
 
-    return {"ratings": ratings, "school_id": school["legacy_id"], "school_name": school["name"]}
+    return {
+        "ratings": ratings,
+        "school_id": school["legacy_id"],
+        "school_name": school["name"],
+    }
 
 
 def parse_instructor_name(instructor_text: str) -> Optional[tuple]:
@@ -283,10 +291,16 @@ def parse_instructor_name(instructor_text: str) -> Optional[tuple]:
 
     # Remove common prefixes and suffixes
     instructor_text = re.sub(
-        r"\b(Dr|Prof|Professor|Mr|Ms|Mrs)\b\.?\s*", "", instructor_text, flags=re.IGNORECASE
+        r"\b(Dr|Prof|Professor|Mr|Ms|Mrs)\b\.?\s*",
+        "",
+        instructor_text,
+        flags=re.IGNORECASE,
     )
     instructor_text = re.sub(
-        r"\s*,?\s*(Ph\.?D\.?|PhD|M\.?D\.?|MD)\b.*$", "", instructor_text, flags=re.IGNORECASE
+        r"\s*,?\s*(Ph\.?D\.?|PhD|M\.?D\.?|MD)\b.*$",
+        "",
+        instructor_text,
+        flags=re.IGNORECASE,
     )
 
     # Handle multiple instructors (take the first one)
@@ -394,10 +408,14 @@ def inject_ratings_into_timetable(
                 enhanced_entry["instructor_would_take_again_percent"] = rating_info[
                     "would_take_again_percent"
                 ]
-                enhanced_entry["instructor_avg_difficulty"] = rating_info["avg_difficulty"]
+                enhanced_entry["instructor_avg_difficulty"] = rating_info[
+                    "avg_difficulty"
+                ]
 
             # Handle nested structure - sections with components
-            if "sections" in enhanced_entry and isinstance(enhanced_entry["sections"], list):
+            if "sections" in enhanced_entry and isinstance(
+                enhanced_entry["sections"], list
+            ):
                 enhanced_sections = []
                 for section in enhanced_entry["sections"]:
                     enhanced_section = dict(section)
@@ -412,23 +430,29 @@ def inject_ratings_into_timetable(
                             # If this component has an instructor field, add rating
                             if "instructor" in enhanced_component:
                                 instructor_text = enhanced_component["instructor"]
-                                rating_info = get_instructor_rating(instructor_text, school_name)
+                                rating_info = get_instructor_rating(
+                                    instructor_text, school_name
+                                )
 
                                 # Add rating fields to the component
-                                enhanced_component["instructor_rating"] = rating_info["rating"]
-                                enhanced_component["instructor_num_ratings"] = rating_info[
-                                    "num_ratings"
+                                enhanced_component["instructor_rating"] = rating_info[
+                                    "rating"
                                 ]
-                                enhanced_component["instructor_department"] = rating_info[
-                                    "department"
-                                ]
-                                enhanced_component["instructor_rmp_id"] = rating_info["rmp_id"]
-                                enhanced_component["instructor_would_take_again_percent"] = (
-                                    rating_info["would_take_again_percent"]
+                                enhanced_component["instructor_num_ratings"] = (
+                                    rating_info["num_ratings"]
                                 )
-                                enhanced_component["instructor_avg_difficulty"] = rating_info[
-                                    "avg_difficulty"
+                                enhanced_component["instructor_department"] = (
+                                    rating_info["department"]
+                                )
+                                enhanced_component["instructor_rmp_id"] = rating_info[
+                                    "rmp_id"
                                 ]
+                                enhanced_component[
+                                    "instructor_would_take_again_percent"
+                                ] = rating_info["would_take_again_percent"]
+                                enhanced_component["instructor_avg_difficulty"] = (
+                                    rating_info["avg_difficulty"]
+                                )
 
                             enhanced_components.append(enhanced_component)
 

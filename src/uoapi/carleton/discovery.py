@@ -25,7 +25,9 @@ class CarletonDiscovery:
 
         # URLs
         self.banner_base = "https://central.carleton.ca/prod"
-        self.term_select_url = f"{self.banner_base}/bwysched.p_select_term?wsea_code=EXT"
+        self.term_select_url = (
+            f"{self.banner_base}/bwysched.p_select_term?wsea_code=EXT"
+        )
         self.search_fields_url = f"{self.banner_base}/bwysched.p_search_fields"
         self.course_search_url = f"{self.banner_base}/bwysched.p_course_search"
 
@@ -78,14 +80,14 @@ class CarletonDiscovery:
     def _load_catalog(self):
         """Load catalog data"""
         import os
-        
+
         # Get the project root directory
         current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.join(current_dir, "..", "..", "..")
-        
+
         catalog_paths = [
             "carleton_courses.json",
-            "../carleton_courses.json", 
+            "../carleton_courses.json",
             "../../carleton_courses.json",
             "assets/carleton_courses.json",
             "../assets/carleton_courses.json",
@@ -99,7 +101,9 @@ class CarletonDiscovery:
                 with open(catalog_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     catalog_data = data.get("subjects", {})
-                    total_courses = sum(len(courses) for courses in catalog_data.values())
+                    total_courses = sum(
+                        len(courses) for courses in catalog_data.values()
+                    )
                     logger.info(
                         f"Loaded catalog: {len(catalog_data)} subjects, "
                         f"{total_courses} courses from {catalog_path}"
@@ -162,7 +166,11 @@ class CarletonDiscovery:
             session_id = session_input.get("value") if session_input else ""
 
             # Submit term selection to get subject list
-            form_data = {"wsea_code": "EXT", "term_code": term_code, "session_id": session_id}
+            form_data = {
+                "wsea_code": "EXT",
+                "term_code": term_code,
+                "session_id": session_id,
+            }
 
             response = session.post(self.search_fields_url, data=form_data, timeout=30)
             response.raise_for_status()
@@ -253,7 +261,9 @@ class CarletonDiscovery:
             ]
 
             # Make the request
-            response = session.post(self.course_search_url, data=search_data, timeout=45)
+            response = session.post(
+                self.course_search_url, data=search_data, timeout=45
+            )
             response.raise_for_status()
 
             # Parse response
@@ -280,7 +290,9 @@ class CarletonDiscovery:
             banner_credits = 0.0
 
             # Find course title from links
-            title_links = soup.find_all("a", href=lambda x: x and "bwysched.p_display_course" in x)
+            title_links = soup.find_all(
+                "a", href=lambda x: x and "bwysched.p_display_course" in x
+            )
             for link in title_links:
                 link_text = link.get_text().strip()
                 if not link_text.isdigit() and subject_code not in link_text:
@@ -288,7 +300,9 @@ class CarletonDiscovery:
                     break
 
             # Find the scrollable div with course results
-            results_div = soup.find("div", style=lambda value: value and "overflow:auto" in value)
+            results_div = soup.find(
+                "div", style=lambda value: value and "overflow:auto" in value
+            )
             if results_div:
                 results_table = results_div.find("table")
                 if results_table:
@@ -347,9 +361,12 @@ class CarletonDiscovery:
                                     r"Meeting Date:\s*(\w+ \d+, \d+)\s*to\s*(\w+ \d+, \d+)",
                                     row_text,
                                 )
-                                days_match = re.search(r"Days:\s*([^T]+?)(?=Time:|$)", row_text)
+                                days_match = re.search(
+                                    r"Days:\s*([^T]+?)(?=Time:|$)", row_text
+                                )
                                 time_match = re.search(
-                                    r"Time:\s*(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})", row_text
+                                    r"Time:\s*(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})",
+                                    row_text,
                                 )
 
                                 if date_match and days_match and time_match:
@@ -454,9 +471,21 @@ class CarletonDiscovery:
         # Process courses (single-threaded for CLI simplicity)
         results = []
         for args in course_args:
-            term_code, session_id, subject_code, course_number, course_title, course_credits = args
+            (
+                term_code,
+                session_id,
+                subject_code,
+                course_number,
+                course_title,
+                course_credits,
+            ) = args
             course = self.search_course(
-                term_code, session_id, subject_code, course_number, course_title, course_credits
+                term_code,
+                session_id,
+                subject_code,
+                course_number,
+                course_title,
+                course_credits,
             )
             results.append(course)
 

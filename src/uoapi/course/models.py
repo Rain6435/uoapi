@@ -48,7 +48,9 @@ class Course(BaseModel):
     description: str = Field(..., description="Course description")
     components: List[str] = Field(default_factory=list, description="Course components")
     prerequisites: str = Field(default="", description="Prerequisites text")
-    dependencies: List[List[str]] = Field(default_factory=list, description="Parsed dependencies")
+    dependencies: List[List[str]] = Field(
+        default_factory=list, description="Parsed dependencies"
+    )
 
 
 # TODO: Refactor logic in Prereq into this class

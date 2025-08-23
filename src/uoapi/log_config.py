@@ -197,7 +197,11 @@ def configure_parser(parser=None):
         help="Suppress logging output to stderr",
     )
     parser.add_argument(
-        "-l", "--logdir", action="store", default="", help="Set destination directory for log files"
+        "-l",
+        "--logdir",
+        action="store",
+        default="",
+        help="Set destination directory for log files",
     )
     parser.add_argument(
         "--logname", action="store", default="", help="Set name prefix for log files"

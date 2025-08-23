@@ -190,7 +190,9 @@ class TestTimetableQuery(unittest.TestCase):
         # Test success
         with self.subTest("course"):
             self.assertEqual(
-                self.tq.normalize_args(qt.ErrorMessenger(), 2020, "winter", "mat", 3121),
+                self.tq.normalize_args(
+                    qt.ErrorMessenger(), 2020, "winter", "mat", 3121
+                ),
                 ("2201", "course", "MAT", "3121"),
             )
         with self.subTest("subject:year"):
@@ -200,7 +202,9 @@ class TestTimetableQuery(unittest.TestCase):
             )
         with self.subTest("subject:year:comp"):
             self.assertEqual(
-                self.tq.normalize_args(qt.ErrorMessenger(), 2020, "winter", "phy", ">1300"),
+                self.tq.normalize_args(
+                    qt.ErrorMessenger(), 2020, "winter", "phy", ">1300"
+                ),
                 ("2201", "subject:year:comp", "PHY", ">1300"),
             )
 
@@ -220,7 +224,8 @@ class TestTimetableQuery(unittest.TestCase):
             # Check if other keys are not set
             for i in "1234":
                 self.assertEqual(
-                    self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)], "N"
+                    self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)],
+                    "N",
                 )
                 self.assertNotIn(
                     "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$0".format(i),
@@ -231,14 +236,17 @@ class TestTimetableQuery(unittest.TestCase):
         with self.subTest('"subject:year" search'):
             self.tq.format_form(qt.ErrorMessenger(), 2020, "winter", "mat", 4)
             # Check if desired keys are set
-            self.assertEqual(self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_04$chk$0"], "Y")
+            self.assertEqual(
+                self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_04$chk$0"], "Y"
+            )
             self.assertEqual(self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_04$0"], "Y")
             # Check if other keys are not set
             self.assertEqual(self.tq.form["SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$0"], "E")
             self.assertNotIn("SSR_CLSRCH_WRK_CATALOG_NBR$0", self.tq.form)
             for i in "123":
                 self.assertEqual(
-                    self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)], "N"
+                    self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)],
+                    "N",
                 )
                 self.assertNotIn(
                     "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$0".format(i),
@@ -249,14 +257,17 @@ class TestTimetableQuery(unittest.TestCase):
         with self.subTest('"subject:year" search (graduate)'):
             self.tq.format_form(qt.ErrorMessenger(), 2020, "winter", "mat", 5)
             # Check if desired keys are set
-            self.assertEqual(self.tq.form["UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$chk$0"], "Y")
+            self.assertEqual(
+                self.tq.form["UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$chk$0"], "Y"
+            )
             self.assertEqual(self.tq.form["UO_PUB_SRCH_WRK_GRADUATED_TBL_CD$0"], "Y")
             # Check if other keys are not set
             self.assertEqual(self.tq.form["SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$0"], "E")
             self.assertNotIn("SSR_CLSRCH_WRK_CATALOG_NBR$0", self.tq.form)
             for i in "1234":
                 self.assertEqual(
-                    self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)], "N"
+                    self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)],
+                    "N",
                 )
                 self.assertNotIn(
                     "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$0".format(i),
@@ -265,14 +276,17 @@ class TestTimetableQuery(unittest.TestCase):
         with self.subTest('"subject:year:comp" search'):
             self.tq.format_form(qt.ErrorMessenger(), 2020, "winter", "phy", ">1300")
             # Check if desired keys are set
-            self.assertEqual(self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_01$chk$0"], "Y")
+            self.assertEqual(
+                self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_01$chk$0"], "Y"
+            )
             self.assertEqual(self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_01$0"], "Y")
             self.assertEqual(self.tq.form["SSR_CLSRCH_WRK_CATALOG_NBR$0"], "1300")
             self.assertEqual(self.tq.form["SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$0"], "G")
             # Check if other keys are not set
             for i in "234":
                 self.assertEqual(
-                    self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)], "N"
+                    self.tq.form["UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$chk$0".format(i)],
+                    "N",
                 )
                 self.assertNotIn(
                     "UO_PUB_SRCH_WRK_SSR_RPTCK_OPT_0{}$0".format(i),
@@ -450,7 +464,9 @@ class TestTimetableParse(unittest.TestCase):
     def test_course_examples(self):
         with open(absolute_path("data/examples.tsv"), "r") as f:
             examples = [
-                re.split("\t+", x.strip()) for x in f.readlines() if not x.strip().startswith("#")
+                re.split("\t+", x.strip())
+                for x in f.readlines()
+                if not x.strip().startswith("#")
             ]
         for example in examples:
             with self.subTest(example.pop(-1)):

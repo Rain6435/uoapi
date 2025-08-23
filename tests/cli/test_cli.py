@@ -90,7 +90,7 @@ class TestMainCli:
         parser = uoapi_parser()
         assert isinstance(parser, argparse.ArgumentParser)
         # In test environment, prog might be different
-        assert parser.prog in ["uoapi", "pytest"]
+        assert parser.prog in ["uoapi", "pytest", "__main__.py"]
 
         # Test that it has subparsers
         assert hasattr(parser, "_subparsers")

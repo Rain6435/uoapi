@@ -11,9 +11,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 # Package meta-data.
 NAME = "schedulo-api"
-DESCRIPTION = (
-    "An API for retrieving public data from the University of Ottawa and Carleton University."
-)
+DESCRIPTION = "An API for retrieving public data from the University of Ottawa and Carleton University."
 URL = "https://github.com/Rain6435/uoapi"
 EMAIL = "brosimo@outlook.fr"
 AUTHOR = "Mohammed Elhasnaoui"
