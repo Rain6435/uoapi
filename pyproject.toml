@@ -82,5 +82,6 @@ version = {attr = "uoapi.__version__.__version__"}
 "uoapi" = ["../assets/carleton/courses.json", "../assets/uottawa/courses.json"]
 
 [tool.setuptools.data-files]
+"assets" = ["assets/API_RESPONSE_FORMATS.md"]
 "assets/carleton" = ["assets/carleton/courses.json"]
 "assets/uottawa" = ["assets/uottawa/courses.json"]

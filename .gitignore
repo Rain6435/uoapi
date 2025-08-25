@@ -153,6 +153,8 @@ assets/*
 !assets/carleton/courses.json
 !assets/uottawa/
 !assets/uottawa/courses.json
+# Keep the API response formats documentation
+!assets/API_RESPONSE_FORMATS.md
 
 CLAUDE.md
 

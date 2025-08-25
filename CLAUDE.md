@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-uO API is a Python CLI tool for retrieving public data from the University of Ottawa. It's a setuptools-based package with modular architecture supporting multiple data sources (timetables, courses, dates, rate my prof).
+Schedulo API is a Python CLI tool for retrieving public data from Canadian universities including the University of Ottawa and Carleton University. It's a setuptools-based package with modular architecture supporting multiple data sources (timetables, courses, dates, rate my prof).
 
 ## Development Commands
 
@@ -38,7 +38,7 @@ pip install -e .[tests]             # Install with test dependencies
 ### CLI Structure
 - Main CLI in `src/uoapi/cli.py` with argparse-based subcommand system
 - Each module provides its own CLI via `cli.py`, `parser()`, and module-specific functions
-- Entry point: `uoapi=uoapi.cli:cli` (console_scripts)
+- Entry point: `schedulo-api=uoapi.cli:cli` (console_scripts)
 
 ### Key Modules
 - `course/`: Course and subject parsing with prerequisite handling
