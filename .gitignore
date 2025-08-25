@@ -156,7 +156,4 @@ assets/*
 # Keep the API response formats documentation
 !assets/API_RESPONSE_FORMATS.md
 
-CLAUDE.md
-
 .claude
-CLAUDE.md
