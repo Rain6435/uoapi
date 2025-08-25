@@ -1,10 +1,11 @@
 include README.md
 include COPYING
 include COPYING.LESSER
-include CLAUDE.md
+include API_RESPONSE_FORMATS.md
 graft src
 global-exclude __pycache__
 global-exclude *.py[co]
 global-exclude .DS_Store
 prune assets/
-include assets/carleton_courses.json
+include assets/carleton/courses.json
+include assets/uottawa/courses.json

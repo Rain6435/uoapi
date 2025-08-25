@@ -148,8 +148,13 @@ TAGS
 
 # Assets folder - contains generated data files and logs
 assets/*
-!assets/carleton_courses.json
+# Keep the courses.json files for both universities
+!assets/carleton/
+!assets/carleton/courses.json
+!assets/uottawa/
+!assets/uottawa/courses.json
 
 CLAUDE.md
 
 .claude
+CLAUDE.md

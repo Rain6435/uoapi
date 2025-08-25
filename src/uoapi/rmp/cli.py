@@ -17,10 +17,10 @@ def parser(default):
         "-s",
         "--school",
         action="store",
-        required=True,
+        required=False,
         help=(
-            "School name (University of Ottawa, Carleton University, "
-            "uottawa, carleton)"
+            "School name override (University of Ottawa, Carleton University, "
+            "uottawa, carleton). Uses --university if not provided."
         ),
     )
     default.add_argument(
@@ -38,7 +38,17 @@ def cli(args=None):
     if args is None:
         print("Did not receive any arguments", file=sys.stderr)
         sys.exit(1)
-    for out in main(args.school, args.professors):
+    
+    # Check university parameter
+    university = getattr(args, 'university', None)
+    if not university:
+        print("University parameter is required", file=sys.stderr)
+        sys.exit(1)
+    
+    # Use university parameter if school is not provided
+    school = args.school if args.school else university
+    
+    for out in main(school, args.professors):
         print(json.dumps(out, indent=2))
 
 

@@ -77,11 +77,23 @@ def cli(args=None):
     if args is None:
         print("Did not receive any arguments", file=sys.stderr)
         sys.exit(1)
-    for output in main(not args.nosubjects, args.courses, args.subjects, args.waittime):
+    
+    # Check university parameter
+    university = getattr(args, 'university', None)
+    if not university:
+        print("University parameter is required", file=sys.stderr)
+        sys.exit(1)
+    
+    # Only University of Ottawa is supported for course module
+    if university.lower() not in ['uottawa', 'university of ottawa']:
+        print(f"Course module only supports University of Ottawa, got: {university}", file=sys.stderr)
+        sys.exit(1)
+    
+    for output in main(not args.nosubjects, args.courses, args.subjects, args.waittime, university):
         print(json.dumps(output))
 
 
-def main(subjects=True, courses=False, subject_list=None, waittime=0.5):
+def main(subjects=True, courses=False, subject_list=None, waittime=0.5, university=None):
     subj = scrape_subjects()
     if subjects:
         yield {"subjects": subj}

@@ -135,6 +135,23 @@ def cli(args=None):
     if args is None:
         logger.error("No arguments received")
         sys.exit(1)
+    
+    # Check university parameter
+    university = getattr(args, 'university', None)
+    if not university:
+        output = format_output(
+            None, [{"type": "error", "message": "University parameter is required"}]
+        )
+        print(json.dumps(output))
+        sys.exit(1)
+    
+    # Only Carleton University is supported for carleton module
+    if university.lower() not in ['carleton', 'carleton university']:
+        output = format_output(
+            None, [{"type": "error", "message": f"Carleton module only supports Carleton University, got: {university}"}]
+        )
+        print(json.dumps(output))
+        sys.exit(1)
 
     # Initialize discovery system
     try:

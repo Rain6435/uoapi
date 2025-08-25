@@ -46,6 +46,16 @@ def uoapi_parser() -> argparse.ArgumentParser:
 
     # Global arguments
     parser = configure_parser(parser)
+    
+    # Add required university parameter
+    parser.add_argument(
+        "--university",
+        "-u",
+        choices=["uottawa", "carleton", "University of Ottawa", "Carleton University"],
+        required=True,
+        help="University to query (required for all commands)"
+    )
+    
     parser.set_defaults(func=noop)
 
     # Add subparsers

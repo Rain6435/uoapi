@@ -1,0 +1,208 @@
+"""
+Discovery service for loading and serving course data from assets files.
+"""
+
+import json
+import os
+from typing import Dict, List, Any, Optional
+from pathlib import Path
+
+
+def get_assets_path() -> Path:
+    """Get the path to the assets directory."""
+    import sys
+    
+    # First, try to find assets in the same directory as the Python executable (for installed packages)
+    if hasattr(sys, 'prefix'):
+        installed_assets = Path(sys.prefix) / "assets"
+        if installed_assets.exists():
+            return installed_assets
+    
+    # Fallback: Get the project root by going up from the current file (for development)
+    current_file = Path(__file__)
+    src_dir = current_file.parent.parent.parent  # src/
+    project_root = src_dir.parent  # project root
+    dev_assets = project_root / "assets"
+    
+    if dev_assets.exists():
+        return dev_assets
+    
+    # Final fallback: check relative to package
+    package_dir = Path(__file__).parent.parent
+    package_assets = package_dir / "assets"
+    
+    return package_assets
+
+
+def get_available_universities() -> List[str]:
+    """Get list of available universities based on assets directories."""
+    assets_path = get_assets_path()
+    universities = []
+    
+    # Check for university directories with courses.json files
+    for university_dir in ["uottawa", "carleton"]:
+        courses_file = assets_path / university_dir / "courses.json"
+        if courses_file.exists():
+            universities.append(university_dir)
+    
+    return universities
+
+
+def normalize_university_name(university: str) -> Optional[str]:
+    """Normalize university name to match directory structure."""
+    normalized = university.lower().strip()
+    
+    if normalized in ['uottawa', 'university of ottawa']:
+        return 'uottawa'
+    elif normalized in ['carleton', 'carleton university']:
+        return 'carleton'
+    else:
+        return None
+
+
+def get_courses_data(university: str) -> Dict[str, Any]:
+    """
+    Load and return course data for the specified university.
+    
+    Args:
+        university: University identifier (uottawa, carleton, etc.)
+    
+    Returns:
+        Dictionary containing course data and metadata
+    
+    Raises:
+        FileNotFoundError: If courses.json file doesn't exist for the university
+        ValueError: If university is not supported
+    """
+    normalized_uni = normalize_university_name(university)
+    if not normalized_uni:
+        raise ValueError(f"Unsupported university: {university}")
+    
+    assets_path = get_assets_path()
+    courses_file = assets_path / normalized_uni / "courses.json"
+    
+    if not courses_file.exists():
+        raise FileNotFoundError(f"Courses data not found for {university} at {courses_file}")
+    
+    try:
+        with open(courses_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # Add discovery metadata
+        data['discovery_metadata'] = {
+            'university': normalized_uni,
+            'file_path': str(courses_file),
+            'file_size_bytes': courses_file.stat().st_size,
+        }
+        
+        return data
+    
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in courses file for {university}: {e}")
+    except Exception as e:
+        raise RuntimeError(f"Failed to load courses data for {university}: {e}")
+
+
+def get_course_count(university: str) -> int:
+    """Get the total number of courses for a university."""
+    try:
+        data = get_courses_data(university)
+        
+        # Handle different data structures
+        if 'metadata' in data and 'total_courses' in data['metadata']:
+            return data['metadata']['total_courses']
+        elif 'subjects' in data:
+            # Count courses in subjects structure (Carleton format)
+            total = 0
+            for subject_courses in data['subjects'].values():
+                total += len(subject_courses)
+            return total
+        elif 'departments' in data:
+            # Count courses in departments structure (UOttawa format)
+            total = 0
+            for dept_info in data['departments'].values():
+                if 'courses' in dept_info:
+                    total += len(dept_info['courses'])
+            return total
+        else:
+            return 0
+    except:
+        return 0
+
+
+def get_subjects_list(university: str) -> List[str]:
+    """Get list of subject codes for a university."""
+    try:
+        data = get_courses_data(university)
+        
+        if 'subjects' in data:
+            # Carleton format
+            return list(data['subjects'].keys())
+        elif 'departments' in data:
+            # UOttawa format
+            return [info.get('department_code', '') for info in data['departments'].values() 
+                   if info.get('department_code')]
+        else:
+            return []
+    except:
+        return []
+
+
+def search_courses(university: str, subject_code: Optional[str] = None, 
+                  query: Optional[str] = None) -> List[Dict[str, Any]]:
+    """
+    Search for courses in a university's data.
+    
+    Args:
+        university: University identifier
+        subject_code: Filter by subject code (optional)
+        query: Search query for course title/description (optional)
+    
+    Returns:
+        List of matching courses
+    """
+    try:
+        data = get_courses_data(university)
+        courses = []
+        
+        if 'subjects' in data:
+            # Carleton format
+            for subject, subject_courses in data['subjects'].items():
+                if subject_code and subject != subject_code.upper():
+                    continue
+                
+                for course in subject_courses:
+                    if query and query.lower() not in course.get('title', '').lower():
+                        continue
+                    
+                    courses.append({
+                        'subject': subject,
+                        'code': course.get('code', ''),
+                        'title': course.get('title', ''),
+                        'credits': course.get('credits', 0),
+                        'description': course.get('description', '')
+                    })
+        
+        elif 'departments' in data:
+            # UOttawa format
+            for dept_name, dept_info in data['departments'].items():
+                dept_code = dept_info.get('department_code', '')
+                if subject_code and dept_code != subject_code.upper():
+                    continue
+                
+                for course in dept_info.get('courses', []):
+                    if query and query.lower() not in course.get('title', '').lower():
+                        continue
+                    
+                    courses.append({
+                        'subject': dept_code,
+                        'code': f"{dept_code} {course.get('course_code', '')}",
+                        'title': course.get('title', ''),
+                        'credits': course.get('credits', ''),
+                        'description': course.get('description', '')
+                    })
+        
+        return courses
+    
+    except Exception:
+        return []
