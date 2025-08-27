@@ -11,12 +11,27 @@ from pathlib import Path
 def get_assets_path() -> Path:
     """Get the path to the assets directory."""
     import sys
+    import site
     
-    # First, try to find assets in the same directory as the Python executable (for installed packages)
+    # First, check for user-installed assets (pip --user)
+    if site.getusersitepackages():
+        user_site = Path(site.getusersitepackages())
+        # Go up from .../lib/python3.x/site-packages to .../assets
+        user_local_assets = user_site.parent.parent.parent / "assets"
+        if user_local_assets.exists():
+            return user_local_assets
+    
+    # Check system-wide installed assets
     if hasattr(sys, 'prefix'):
         installed_assets = Path(sys.prefix) / "assets"
         if installed_assets.exists():
             return installed_assets
+    
+    # Check site-packages locations
+    for site_dir in site.getsitepackages():
+        site_assets = Path(site_dir).parent / "assets"
+        if site_assets.exists():
+            return site_assets
     
     # Fallback: Get the project root by going up from the current file (for development)
     current_file = Path(__file__)
