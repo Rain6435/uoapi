@@ -68,7 +68,8 @@ Documentation = "https://github.com/Rain6435/uoapi#readme"
 "Release Notes" = "https://github.com/Rain6435/uoapi/releases"
 
 [project.scripts]
-schedulo-api = "uoapi.cli:cli"
+schedulo-api = "uoapi.cli_old:cli"
+schedulo = "uoapi.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
