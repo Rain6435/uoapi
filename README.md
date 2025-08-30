@@ -12,6 +12,7 @@ A Python CLI tool and library for retrieving public data from Canadian universit
 - **University of Ottawa**: Course data, timetables, Rate My Professor integration
 - **Carleton University**: Complete course catalog, real-time course availability, term information
 - **Rate My Professor**: Professor ratings integration for both universities
+- **FastAPI Server**: REST API server for serving course data via HTTP endpoints
 - Modular CLI with consistent JSON output
 - Python library for programmatic access
 - Support for multiple data sources and formats
@@ -50,6 +51,10 @@ schedulo-api course --courses CSI --limit 5
 
 # Get Rate My Professor data
 schedulo-api rmp --school "University of Ottawa" --instructor "John Smith"
+
+# Start FastAPI server
+schedulo-api server --port 8000
+schedulo-api server --host 0.0.0.0 --port 8080 --reload
 ```
 
 ### Python Code Usage
@@ -174,6 +179,76 @@ schedulo-api rmp --school "uottawa" --instructor "John Smith"
 schedulo-api rmp --school "carleton" --instructor "Jane Doe"
 ```
 
+### FastAPI Server
+
+#### Starting the Server
+```bash
+# Basic server startup
+schedulo-api server
+
+# Custom host and port
+schedulo-api server --host 0.0.0.0 --port 8080
+
+# Development mode with auto-reload
+schedulo-api server --reload --log-level debug
+
+# Production with multiple workers
+schedulo-api server --workers 4 --host 0.0.0.0 --port 8000
+```
+
+#### API Endpoints
+
+Once the server is running, the following endpoints are available:
+
+**Health Check**
+```bash
+curl http://localhost:8000/health
+```
+*Response:*
+```json
+{
+  "status": "healthy",
+  "available_universities": ["uottawa", "carleton"],
+  "version": "2.3.0"
+}
+```
+
+**List Universities**
+```bash
+curl http://localhost:8000/universities
+```
+
+**University Information**
+```bash
+curl http://localhost:8000/universities/uottawa/info
+curl http://localhost:8000/universities/carleton/info
+```
+
+**University Subjects**
+```bash
+curl http://localhost:8000/universities/uottawa/subjects
+curl http://localhost:8000/universities/carleton/subjects
+```
+
+**Course Search with Filtering**
+```bash
+# Get all courses (limited to 50 by default)
+curl http://localhost:8000/universities/uottawa/courses
+
+# Filter by subject
+curl http://localhost:8000/universities/uottawa/courses?subject=CSI
+
+# Search in course titles and descriptions
+curl http://localhost:8000/universities/uottawa/courses?search=programming
+
+# Combine filters and set limit
+curl http://localhost:8000/universities/uottawa/courses?subject=CSI&search=web&limit=10
+```
+
+**Interactive Documentation**
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
 ## Python Library Usage
 
 ### Carleton University Integration
@@ -291,6 +366,33 @@ timetable_data = {
 
 enhanced_data = inject_ratings_into_timetable(timetable_data, "University of Ottawa")
 # Now enhanced_data includes instructor ratings for each component
+```
+
+### FastAPI Server Integration
+
+```python
+from uoapi.server.app import create_app
+import uvicorn
+
+# Create the FastAPI application
+app = create_app()
+
+# Run the server programmatically
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)
+
+# Or use the CLI interface
+from uoapi.server.cli import main as server_main
+import argparse
+
+args = argparse.Namespace(
+    host="127.0.0.1",
+    port=8000,
+    reload=True,
+    log_level="info",
+    workers=1
+)
+server_main(args)
 ```
 
 ### Error Handling
@@ -413,7 +515,7 @@ All CLI commands return structured JSON with this format:
 
 ### Requirements
 - Python 3.10+
-- Dependencies: requests, bs4, lxml, pandas, pydantic<2, parsedatetime
+- Dependencies: requests, bs4, lxml, pandas, pydantic<2, parsedatetime, fastapi, uvicorn
 
 ### Development Commands
 ```bash
@@ -442,6 +544,9 @@ PYTHONPATH=src python3.10 -c "from uoapi.cli import cli; cli(['--help'])"
 
 # Test Carleton integration
 PYTHONPATH=src python3.10 -c "from uoapi.cli import cli; cli(['carleton', '--available-terms'])"
+
+# Test server functionality
+PYTHONPATH=src python3.10 -c "from uoapi.server.app import create_app; print('✓ Server app created successfully')"
 ```
 
 ## Troubleshooting
@@ -455,6 +560,8 @@ PYTHONPATH=src python3.10 -c "from uoapi.cli import cli; cli(['carleton', '--ava
 3. **Import errors**: Make sure you installed the package correctly and are using Python 3.10+
 
 4. **Network timeouts**: Carleton queries can be slow; try reducing the number of workers or subjects queried at once
+
+5. **Server won't start**: Make sure FastAPI and uvicorn are installed: `pip install 'schedulo-api[server]'` or `pip install fastapi uvicorn`
 
 ### Debug Mode
 ```bash
@@ -491,6 +598,7 @@ To add support for a new university:
 
 - **Complete Carleton University integration** with real-time course data
 - **Rate My Professor GraphQL API integration** for both universities  
+- **FastAPI REST API server** with comprehensive endpoints for HTTP access
 - **Term validation** - automatically checks if requested terms are available
 - **Enhanced error handling** with helpful error messages
 - **Comprehensive Python library interface** for programmatic usage

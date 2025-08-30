@@ -42,6 +42,8 @@ dependencies = [
     "pandas",
     "parsedatetime",
     "pydantic<2",
+    "fastapi",
+    "uvicorn[standard]",
 ]
 
 [project.optional-dependencies]

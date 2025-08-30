@@ -832,6 +832,458 @@ Both datasets include course codes, titles, credits, descriptions, and additiona
 
 ---
 
+## FastAPI Server Module
+
+The FastAPI server provides HTTP REST API endpoints for accessing course data. All endpoints return JSON responses and support OpenAPI documentation.
+
+### Server Startup
+
+```bash
+# Start server on default port 8000
+schedulo-api --university carleton server
+
+# Custom configuration
+schedulo-api --university carleton server --host 0.0.0.0 --port 8080 --reload
+```
+
+### Base URL
+
+When server is running on localhost:8000, all endpoints are available at `http://localhost:8000`
+
+### API Documentation
+
+- **Swagger UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
+- **OpenAPI Schema**: `http://localhost:8000/openapi.json`
+
+### Endpoints
+
+#### Health Check
+```bash
+GET /health
+```
+
+**Response Format:**
+```json
+{
+  "status": "healthy",
+  "available_universities": ["uottawa", "carleton"],
+  "version": "2.4.3"
+}
+```
+
+#### List Universities
+```bash
+GET /universities
+```
+
+**Response Format:**
+```json
+{
+  "universities": ["uottawa", "carleton"],
+  "count": 2
+}
+```
+
+#### University Information
+```bash
+GET /universities/{university}/info
+```
+
+**Response Format:**
+```json
+{
+  "university": "carleton",
+  "total_courses": 3580,
+  "total_subjects": 100,
+  "subjects": ["AERO", "AFRI", "ANTH", "..."],
+  "data_metadata": {
+    "university": "Carleton University",
+    "total_subjects": 100,
+    "total_courses": 3580,
+    "scraped_at": "2025-07-26 15:40:44"
+  },
+  "discovery_metadata": {
+    "university": "carleton",
+    "file_path": "/path/to/assets/carleton/courses.json",
+    "file_size_bytes": 2847291
+  }
+}
+```
+
+#### University Subjects
+```bash
+GET /universities/{university}/subjects
+```
+
+**Response Format:**
+```json
+{
+  "university": "carleton",
+  "subjects": ["AERO", "AFRI", "ANTH", "ARAB", "..."],
+  "total_subjects": 100
+}
+```
+
+#### Static Course Data (Catalog)
+```bash
+GET /universities/{university}/courses?subject=COMP&search=1001&limit=10
+```
+
+**Response Format:**
+```json
+{
+  "university": "carleton",
+  "subject_filter": "COMP",
+  "query": "1001",
+  "total_courses": 1,
+  "courses_shown": 1,
+  "courses": [
+    {
+      "subject": "COMP",
+      "code": "COMP 1001",
+      "title": "Introduction to Computational Thinking for Arts and Social Science Students",
+      "credits": "0.5",
+      "description": "An introduction to computational thinking and its applications..."
+    }
+  ]
+}
+```
+
+#### Live Course Data with Sections
+```bash
+GET /universities/{university}/live-courses?term=fall&year=2025&subjects=COMP&limit=5&include_ratings=false
+```
+
+**Parameters:**
+- `term` (required): Term name (fall, winter, summer)
+- `year` (required): Academic year (e.g., 2025)
+- `subjects` (required): Comma-separated list of subject codes (e.g., COMP,MATH)
+- `course_codes` (optional): Comma-separated list of specific course codes to filter for (e.g., COMP1001,COMP1005)
+- `limit` (optional): Maximum courses per subject (default: 10, max: 50)
+- `include_ratings` (optional): Include Rate My Professor ratings (default: false)
+
+**Response Format:**
+```json
+{
+  "university": "carleton",
+  "term_code": "202530",
+  "term_name": "Fall 2025 (September-December)",
+  "subjects_queried": ["COMP"],
+  "total_courses": 5,
+  "courses_offered": 5,
+  "courses_with_errors": 0,
+  "offering_rate_percent": 100.0,
+  "courses": [
+    {
+      "course_code": "COMP 1001",
+      "subject_code": "COMP",
+      "course_number": "1001",
+      "catalog_title": "Introduction to Computational Thinking for Arts and Social Science Students",
+      "catalog_credits": 0.5,
+      "is_offered": true,
+      "sections_found": 1,
+      "banner_title": "Computing for Arts Students",
+      "banner_credits": 0.5,
+      "sections": [
+        {
+          "crn": "31107",
+          "section": "A",
+          "status": "Open",
+          "credits": 0.5,
+          "schedule_type": "Lecture",
+          "instructor": "Andrew Runka",
+          "meeting_times": [],
+          "notes": [],
+          "rmp_rating": null
+        }
+      ],
+      "error": false,
+      "error_message": ""
+    }
+  ]
+}
+```
+
+#### Live Course Data with Rate My Professor Integration
+```bash
+GET /universities/{university}/live-courses?term=fall&year=2025&subjects=COMP&limit=3&include_ratings=true
+```
+
+**Enhanced Response (adds rmp_rating to sections):**
+```json
+{
+  "university": "carleton",
+  "term_code": "202530",
+  "term_name": "Fall 2025 (September-December)",
+  "subjects_queried": ["COMP"],
+  "total_courses": 3,
+  "courses_offered": 3,
+  "courses_with_errors": 0,
+  "offering_rate_percent": 100.0,
+  "courses": [
+    {
+      "course_code": "COMP 1001",
+      "subject_code": "COMP",
+      "course_number": "1001",
+      "catalog_title": "Introduction to Computational Thinking for Arts and Social Science Students",
+      "catalog_credits": 0.5,
+      "is_offered": true,
+      "sections_found": 1,
+      "banner_title": "Computing for Arts Students",
+      "banner_credits": 0.5,
+      "sections": [
+        {
+          "crn": "31107",
+          "section": "A",
+          "status": "Open",
+          "credits": 0.5,
+          "schedule_type": "Lecture",
+          "instructor": "Andrew Runka",
+          "meeting_times": [],
+          "notes": [],
+          "rmp_rating": {
+            "instructor": "Andrew Runka",
+            "rating": 3.5,
+            "num_ratings": 52,
+            "department": "Computer Science",
+            "rmp_id": 1902143,
+            "would_take_again_percent": 63.8298,
+            "avg_difficulty": 3.4
+          }
+        }
+      ],
+      "error": false,
+      "error_message": ""
+    }
+  ]
+}
+```
+
+#### Live Course Data with Specific Course Filtering
+```bash
+GET /universities/{university}/live-courses?term=fall&year=2025&subjects=COMP&course_codes=COMP1001&include_ratings=true
+```
+
+**Parameters:**
+- `course_codes` (optional): Comma-separated list of specific course codes to filter for
+  - Examples: `COMP1001`, `COMP1001,COMP1005`, `COMP 1001` (spaces are normalized)
+  - Case insensitive and flexible formatting
+  - When omitted, returns all courses in the specified subjects
+
+**Single Course Response:**
+```json
+{
+  "university": "carleton",
+  "term_code": "202530", 
+  "term_name": "Fall 2025 (September-December)",
+  "subjects_queried": ["COMP"],
+  "total_courses": 1,
+  "courses_offered": 1,
+  "courses_with_errors": 0,
+  "offering_rate_percent": 100.0,
+  "courses": [
+    {
+      "course_code": "COMP 1001",
+      "subject_code": "COMP",
+      "course_number": "1001",
+      "catalog_title": "Introduction to Computational Thinking for Arts and Social Science Students",
+      "catalog_credits": 0.5,
+      "is_offered": true,
+      "sections_found": 1,
+      "banner_title": "Computing for Arts Students",
+      "banner_credits": 0.5,
+      "sections": [
+        {
+          "crn": "31107",
+          "section": "A",
+          "status": "Open",
+          "credits": 0.5,
+          "schedule_type": "Lecture",
+          "instructor": "Andrew Runka",
+          "meeting_times": [],
+          "notes": [],
+          "rmp_rating": {
+            "instructor": "Andrew Runka",
+            "rating": 3.5,
+            "num_ratings": 52,
+            "department": "Computer Science",
+            "rmp_id": 1902143,
+            "would_take_again_percent": 63.8298,
+            "avg_difficulty": 3.4
+          }
+        }
+      ],
+      "error": false,
+      "error_message": ""
+    }
+  ]
+}
+```
+
+**Multiple Courses Example:**
+```bash
+GET /universities/{university}/live-courses?term=fall&year=2025&subjects=COMP&course_codes=COMP1001,COMP1005&include_ratings=true
+```
+
+This returns an array with both COMP 1001 and COMP 1005, each with their complete section and rating data.
+
+### Usage Examples
+
+#### Common Use Cases
+
+1. **Get all COMP courses for a term:**
+   ```bash
+   GET /universities/carleton/live-courses?term=fall&year=2025&subjects=COMP&limit=20
+   ```
+
+2. **Get specific course (COMP 1001) only:**
+   ```bash
+   GET /universities/carleton/live-courses?term=fall&year=2025&subjects=COMP&course_codes=COMP1001&include_ratings=true
+   ```
+
+3. **Compare multiple specific courses:**
+   ```bash
+   GET /universities/carleton/live-courses?term=fall&year=2025&subjects=COMP,MATH&course_codes=COMP1001,COMP1005,MATH1007&include_ratings=true
+   ```
+
+4. **Get all courses from multiple subjects:**
+   ```bash
+   GET /universities/carleton/live-courses?term=fall&year=2025&subjects=COMP,MATH,PHYS&limit=10
+   ```
+
+### Data Models
+
+#### Health Response
+- `status` (string): Service status
+- `available_universities` (array): List of supported universities
+- `version` (string): API version
+
+#### University Info Response
+- `university` (string): University identifier
+- `total_courses` (integer): Total number of courses
+- `total_subjects` (integer): Total number of subjects
+- `subjects` (array): List of subject codes
+- `data_metadata` (object): Source data metadata
+- `discovery_metadata` (object): Discovery system metadata
+
+#### Static Course Data
+- `subject` (string): Subject code
+- `code` (string): Full course code
+- `title` (string): Course title
+- `credits` (string): Credit value
+- `description` (string): Course description
+
+#### Live Course Data
+- `course_code` (string): Full course code
+- `subject_code` (string): Subject prefix
+- `course_number` (string): Course number
+- `catalog_title` (string): Official catalog title
+- `catalog_credits` (float): Credit value from catalog
+- `is_offered` (boolean): Whether course has sections
+- `sections_found` (integer): Number of sections discovered
+- `banner_title` (string): Title from registration system
+- `banner_credits` (float): Credits from registration system
+- `sections` (array): Live course sections
+- `error` (boolean): Whether parsing failed
+- `error_message` (string): Error details if applicable
+
+#### Course Section
+- `crn` (string): Course Reference Number
+- `section` (string): Section identifier
+- `status` (string): Enrollment status (Open, Full, Closed, etc.)
+- `credits` (float): Section credit value
+- `schedule_type` (string): Type (Lecture, Lab, Tutorial, etc.)
+- `instructor` (string): Instructor name
+- `meeting_times` (array): Meeting schedule details
+- `notes` (array): Additional notes
+- `rmp_rating` (object, optional): Rate My Professor data
+
+#### Meeting Time
+- `start_date` (string): Start date (MMM DD, YYYY)
+- `end_date` (string): End date (MMM DD, YYYY)
+- `days` (string): Days of week (e.g., "Wed Fri", "MoWe")
+- `start_time` (string): Start time (HH:MM)
+- `end_time` (string): End time (HH:MM)
+
+#### RMP Rating
+- `instructor` (string): Instructor name
+- `rating` (float|null): Overall rating (1.0-5.0)
+- `num_ratings` (integer): Number of student ratings
+- `department` (string|null): Department name
+- `rmp_id` (integer|null): Rate My Professor ID
+- `would_take_again_percent` (float|null): Would take again percentage
+- `avg_difficulty` (float|null): Average difficulty (1.0-5.0)
+
+### Query Parameters
+
+#### Live Courses Endpoint
+- `term` (required): Term name (winter, summer, fall)
+- `year` (required): Academic year (integer)
+- `subjects` (required): Comma-separated subject codes
+- `limit` (optional): Maximum courses per subject (1-50, default: 10)
+- `include_ratings` (optional): Include Rate My Professor data (boolean, default: false)
+
+#### Static Courses Endpoint
+- `subject` (optional): Filter by subject code
+- `search` (optional): Search in titles, codes, and descriptions
+- `limit` (optional): Maximum results (0-1000, default: 50)
+
+### Features
+
+#### Live Schedule Data
+- **Real-time enrollment status**: Open, Full, Waitlist, etc.
+- **Complete section information**: Lectures, labs, tutorials
+- **Meeting times**: Days, times, and date ranges
+- **Instructor information**: Current teaching assignments
+- **Course Reference Numbers (CRNs)**: For registration
+
+#### Rate My Professor Integration
+- **Instructor ratings**: Overall rating and number of reviews
+- **Department information**: Professor's department
+- **Student feedback metrics**: Would take again percentage, difficulty ratings
+- **Direct RMP links**: Via RMP ID for detailed profiles
+
+#### Performance
+- **Cached RMP lookups**: Efficient batch processing of instructor ratings
+- **Comprehensive error handling**: Continues operation even if RMP is unavailable
+- **Term validation**: Checks available terms before querying
+
+### Usage Examples
+
+#### Get COMP 1001 with instructor ratings
+```bash
+curl "http://localhost:8000/universities/carleton/live-courses?term=fall&year=2025&subjects=COMP&include_ratings=true" \
+  | jq '.courses[] | select(.course_code == "COMP 1001")'
+```
+
+#### Get all Computer Science courses for Winter 2026
+```bash
+curl "http://localhost:8000/universities/carleton/live-courses?term=winter&year=2026&subjects=COMP&limit=50"
+```
+
+#### Search for courses with "programming" in the title
+```bash
+curl "http://localhost:8000/universities/carleton/courses?search=programming&limit=10"
+```
+
+### Error Handling
+
+The server returns appropriate HTTP status codes:
+- **200**: Success
+- **400**: Bad request (invalid parameters)
+- **404**: University or resource not found
+- **500**: Internal server error
+
+Error responses include detail messages:
+```json
+{
+  "detail": "University 'invalid' not found. Available: ['uottawa', 'carleton']"
+}
+```
+
+---
+
 ## Common Message Types
 
 ### Message Structure

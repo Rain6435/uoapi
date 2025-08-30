@@ -13,34 +13,57 @@ def get_assets_path() -> Path:
     import sys
     import site
     
-    # First, check for user-installed assets (pip --user)
-    if site.getusersitepackages():
-        user_site = Path(site.getusersitepackages())
-        # Go up from .../lib/python3.x/site-packages to .../assets
-        user_local_assets = user_site.parent.parent.parent / "assets"
-        if user_local_assets.exists():
-            return user_local_assets
+    # Check if we're in a virtual environment
+    in_venv = hasattr(sys, 'prefix') and sys.prefix != sys.base_prefix
     
-    # Check system-wide installed assets
-    if hasattr(sys, 'prefix'):
-        installed_assets = Path(sys.prefix) / "assets"
-        if installed_assets.exists():
-            return installed_assets
+    # PRIORITY 1: Development assets (current working directory)
+    cwd_assets = Path.cwd() / "assets"
+    if cwd_assets.exists() and (cwd_assets / "carleton" / "courses.json").exists():
+        return cwd_assets
     
-    # Check site-packages locations
-    for site_dir in site.getsitepackages():
-        site_assets = Path(site_dir).parent / "assets"
-        if site_assets.exists():
-            return site_assets
-    
-    # Fallback: Get the project root by going up from the current file (for development)
+    # PRIORITY 2: Project root assets (for development)
     current_file = Path(__file__)
     src_dir = current_file.parent.parent.parent  # src/
     project_root = src_dir.parent  # project root
     dev_assets = project_root / "assets"
     
-    if dev_assets.exists():
+    if dev_assets.exists() and (dev_assets / "carleton" / "courses.json").exists():
         return dev_assets
+    
+    if in_venv:
+        # If in virtual environment, ONLY check within the venv
+        # PRIORITY 3: Virtual environment assets
+        venv_assets = Path(sys.prefix) / "assets"
+        if venv_assets.exists() and (venv_assets / "carleton" / "courses.json").exists():
+            return venv_assets
+        
+        # PRIORITY 4: Virtual environment site-packages
+        for site_dir in site.getsitepackages():
+            if site_dir.startswith(sys.prefix):  # Only venv site-packages
+                site_assets = Path(site_dir).parent / "assets"
+                if site_assets.exists() and (site_assets / "carleton" / "courses.json").exists():
+                    return site_assets
+    else:
+        # Not in virtual environment - check system locations
+        # PRIORITY 3: System-wide installed assets
+        if hasattr(sys, 'prefix'):
+            installed_assets = Path(sys.prefix) / "assets"
+            if installed_assets.exists() and (installed_assets / "carleton" / "courses.json").exists():
+                return installed_assets
+        
+        # PRIORITY 4: User-installed assets (pip --user)
+        if site.getusersitepackages():
+            user_site = Path(site.getusersitepackages())
+            # Go up from .../lib/python3.x/site-packages to .../assets
+            user_local_assets = user_site.parent.parent.parent / "assets"
+            if user_local_assets.exists() and (user_local_assets / "carleton" / "courses.json").exists():
+                return user_local_assets
+        
+        # PRIORITY 5: Site-packages locations
+        for site_dir in site.getsitepackages():
+            site_assets = Path(site_dir).parent / "assets"
+            if site_assets.exists() and (site_assets / "carleton" / "courses.json").exists():
+                return site_assets
     
     # Final fallback: check relative to package
     package_dir = Path(__file__).parent.parent
@@ -187,8 +210,13 @@ def search_courses(university: str, subject_code: Optional[str] = None,
                     continue
                 
                 for course in subject_courses:
-                    if query and query.lower() not in course.get('title', '').lower():
-                        continue
+                    if query:
+                        # Search in both title and code
+                        title_match = query.lower() in course.get('title', '').lower()
+                        code_match = query.lower() in course.get('code', '').lower()
+                        description_match = query.lower() in course.get('description', '').lower()
+                        if not (title_match or code_match or description_match):
+                            continue
                     
                     courses.append({
                         'subject': subject,
@@ -206,8 +234,13 @@ def search_courses(university: str, subject_code: Optional[str] = None,
                     continue
                 
                 for course in dept_info.get('courses', []):
-                    if query and query.lower() not in course.get('title', '').lower():
-                        continue
+                    if query:
+                        # Search in both title and code
+                        title_match = query.lower() in course.get('title', '').lower()
+                        code_match = query.lower() in course.get('course_code', '').lower()
+                        description_match = query.lower() in course.get('description', '').lower()
+                        if not (title_match or code_match or description_match):
+                            continue
                     
                     courses.append({
                         'subject': dept_code,

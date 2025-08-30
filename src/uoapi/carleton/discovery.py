@@ -79,38 +79,26 @@ class CarletonDiscovery:
 
     def _load_catalog(self):
         """Load catalog data"""
-        import os
-
-        # Get the project root directory
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.join(current_dir, "..", "..", "..")
-
-        catalog_paths = [
-            "carleton_courses.json",
-            "../carleton_courses.json",
-            "../../carleton_courses.json",
-            "assets/carleton_courses.json",
-            "../assets/carleton_courses.json",
-            "../../assets/carleton_courses.json",
-            "../../../assets/carleton_courses.json",
-            os.path.join(project_root, "assets", "carleton_courses.json"),
-        ]
-
-        for catalog_path in catalog_paths:
-            try:
-                with open(catalog_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    catalog_data = data.get("subjects", {})
-                    total_courses = sum(
-                        len(courses) for courses in catalog_data.values()
-                    )
-                    logger.info(
-                        f"Loaded catalog: {len(catalog_data)} subjects, "
-                        f"{total_courses} courses from {catalog_path}"
-                    )
-                    return catalog_data
-            except FileNotFoundError:
-                continue
+        from uoapi.discovery.discovery_service import get_assets_path
+        
+        try:
+            # Use the discovery service to get the proper assets path
+            assets_path = get_assets_path()
+            catalog_path = assets_path / "carleton" / "courses.json"
+            
+            with open(catalog_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                catalog_data = data.get("subjects", {})
+                total_courses = sum(
+                    len(courses) for courses in catalog_data.values()
+                )
+                logger.info(
+                    f"Loaded catalog: {len(catalog_data)} subjects, "
+                    f"{total_courses} courses from {catalog_path}"
+                )
+                return catalog_data
+        except Exception as e:
+            logger.warning(f"Failed to load catalog: {e}")
 
         logger.warning("No catalog file found - using empty catalog")
         return {}
