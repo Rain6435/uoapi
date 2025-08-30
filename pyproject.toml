@@ -15,7 +15,7 @@ maintainers = [
     {name = "Mohammed Elhasnaoui", email = "brosimo@outlook.fr"},
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Education",
     "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",

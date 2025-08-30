@@ -2,617 +2,568 @@
 
 A Python CLI tool and library for retrieving public data from Canadian universities, including the University of Ottawa and Carleton University.
 
-**This is a fork of [andrewnags/uoapi](https://github.com/andrewnags/uoapi) with added support for Carleton University and Rate My Professor integration.**
+**This package now features a completely refactored, clean architecture with improved maintainability and extensibility.**
 
 [![PyPI version](https://badge.fury.io/py/schedulo-api.svg)](https://badge.fury.io/py/schedulo-api)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
-## Features
+## ✨ Features
 
-- **University of Ottawa**: Course data, timetables, Rate My Professor integration
-- **Carleton University**: Complete course catalog, real-time course availability, term information
-- **Rate My Professor**: Professor ratings integration for both universities
-- **FastAPI Server**: REST API server for serving course data via HTTP endpoints
-- Modular CLI with consistent JSON output
-- Python library for programmatic access
-- Support for multiple data sources and formats
+- **🏫 Multi-University Support**: University of Ottawa and Carleton University
+- **📚 Complete Course Data**: Catalogs, timetables, prerequisites, components
+- **⚡ Live Timetable Data**: Real-time course availability and scheduling
+- **⭐ Rate My Professor Integration**: Professor ratings for both universities
+- **🚀 FastAPI REST API**: Complete HTTP API with interactive documentation
+- **🔧 Clean Architecture**: Layered design with proper separation of concerns
+- **🐍 Python Library**: Comprehensive programmatic access
+- **📝 Type Safety**: Full type annotations with Pydantic models
+- **🔄 Backward Compatibility**: Existing code continues to work
 
-## Installation
+## 🏗️ New Architecture
 
-### From PyPI (Recommended)
+The package has been completely refactored with a clean layered architecture:
+
+```
+uoapi/
+├── core/                    # Domain models & interfaces
+├── universities/           # University-specific implementations  
+├── services/              # Business logic layer
+├── interfaces/            # CLI and API interfaces
+└── utils/                # Shared utilities
+```
+
+### Key Benefits:
+- ✅ **Single Responsibility**: Each module has one clear purpose
+- ✅ **Consistent Models**: Unified data structures across universities
+- ✅ **Easy Extension**: Add new universities by implementing simple interfaces
+- ✅ **Better Testing**: Clear boundaries enable comprehensive testing
+- ✅ **Type Safety**: Full type annotations throughout
+
+## 🚀 Quick Start
+
+### Installation
+
 ```bash
+# From PyPI (Recommended)
 pip install schedulo-api
-```
 
-### From Source
-```bash
+# From Source
 pip install git+https://github.com/Rain6435/uoapi.git@dev
+
+# Development Installation
+git clone https://github.com/Rain6435/uoapi.git
+cd uoapi
+pip install -e .[tests]
 ```
 
-### Development Installation
+### Basic Usage
+
+#### New Service-Based API (Recommended)
+```python
+from uoapi.core import University
+from uoapi.services import DefaultCourseService, DefaultTimetableService
+
+# Initialize services
+course_service = DefaultCourseService()
+timetable_service = DefaultTimetableService()
+
+# Get all subjects for a university
+subjects = course_service.get_subjects(University.CARLETON)
+print(f"Found {len(subjects)} subjects")
+
+# Get courses for a specific subject
+courses = course_service.get_courses(University.CARLETON, "COMP")
+print(f"Found {len(courses)} COMP courses")
+
+# Search courses
+search_result = course_service.search_courses(University.UOTTAWA, "programming")
+print(f"Found {search_result.total_found} courses matching 'programming'")
+
+# Get live timetable data (Carleton only)
+if University.CARLETON in timetable_service.get_supported_universities():
+    live_data = timetable_service.get_live_courses(
+        University.CARLETON,
+        term_code="202501",
+        subjects=["COMP"],
+        max_courses_per_subject=10
+    )
+    print(f"Found {live_data.courses_offered} offered courses")
+```
+
+#### Command Line Interface
+```bash
+# Get course information
+uoapi course -u carleton -c COMP MATH
+uoapi course -u uottawa --search "web programming"
+
+# Get live timetable data
+uoapi timetable -u carleton --term 202501 --subjects COMP,MATH
+uoapi timetable -u carleton --term 202501 --subjects COMP --ratings
+
+# Start FastAPI server
+uoapi server --port 8000 --reload
+```
+
+#### FastAPI Server
+```bash
+# Start the server
+uoapi server --host 0.0.0.0 --port 8000
+
+# Interactive docs available at:
+# http://localhost:8000/docs
+# http://localhost:8000/redoc
+```
+
+## 📖 Complete Usage Guide
+
+### University Data Access
+
+#### Course Service
+```python
+from uoapi.core import University
+from uoapi.services import DefaultCourseService
+
+service = DefaultCourseService()
+
+# Get all supported universities
+universities = service.get_all_universities()
+
+# Get subjects
+subjects = service.get_subjects(University.UOTTAWA)
+for subject in subjects[:5]:
+    print(f"{subject.code}: {subject.name}")
+
+# Get courses with filtering
+courses = service.get_courses(
+    University.CARLETON, 
+    subject_code="COMP",
+    query="database"
+)
+
+# Get specific course
+course = service.get_course_by_code(University.UOTTAWA, "CSI3140")
+print(f"{course.title}: {course.credits} credits")
+
+# Get course statistics
+stats = service.get_course_statistics(University.CARLETON)
+print(f"Total courses: {stats['total_courses']}")
+```
+
+#### Timetable Service
+```python
+from uoapi.services import DefaultTimetableService
+
+service = DefaultTimetableService()
+
+# Check which universities support live data
+supported = service.get_supported_universities()
+print(f"Live data supported by: {[u.value for u in supported]}")
+
+# Get available terms
+terms = service.get_available_terms(University.CARLETON)
+for code, name in terms:
+    print(f"{code}: {name}")
+
+# Get live course data
+result = service.get_live_courses(
+    university=University.CARLETON,
+    term_code="202501",
+    subjects=["COMP", "MATH"],
+    max_courses_per_subject=20
+)
+
+print(f"Processing time: {result.processing_time:.2f}s")
+print(f"Offering rate: {result.offering_rate:.1f}%")
+
+for course in result.courses:
+    if course.is_offered:
+        print(f"\n{course.course_code}: {course.title}")
+        for section in course.sections:
+            print(f"  {section.section}: {section.instructor} - {section.status}")
+            for mt in section.meeting_times:
+                print(f"    {mt.days} {mt.start_time}-{mt.end_time}")
+```
+
+#### Rating Service
+```python
+from uoapi.services import DefaultRatingService
+
+service = DefaultRatingService()
+
+# Get individual instructor rating
+rating = service.get_instructor_rating("John Smith", University.UOTTAWA)
+if rating:
+    print(f"Rating: {rating['rating']}/5.0")
+    print(f"Difficulty: {rating['avg_difficulty']}/5.0")
+
+# Get batch ratings
+instructors = [("Jane", "Doe"), ("John", "Smith")]
+ratings = service.get_batch_ratings(instructors, University.CARLETON)
+
+# Enhance courses with ratings
+enhanced_courses = service.inject_ratings_into_courses(courses, University.UOTTAWA)
+```
+
+### CLI Usage
+
+#### Course Commands
+```bash
+# List subjects for a university
+uoapi course -u uottawa
+
+# Get courses for specific subjects
+uoapi course -u carleton -c COMP MATH PHYS
+
+# Search courses
+uoapi course -u uottawa --search "artificial intelligence"
+
+# Get courses without showing subjects table
+uoapi course -u carleton -c COMP -s
+```
+
+#### Timetable Commands  
+```bash
+# Show available terms
+uoapi timetable -u carleton
+
+# Get live course data
+uoapi timetable -u carleton --term 202501 --subjects COMP,MATH
+
+# Include professor ratings
+uoapi timetable -u carleton --term 202501 --subjects COMP --ratings
+
+# Filter specific courses
+uoapi timetable -u carleton --term 202501 --subjects COMP --courses COMP1001,COMP1002
+
+# Adjust query limits
+uoapi timetable -u carleton --term 202501 --subjects COMP --limit 30
+```
+
+### REST API Usage
+
+#### Start Server
+```python
+from uoapi.interfaces.api import create_app
+import uvicorn
+
+app = create_app()
+uvicorn.run(app, host="0.0.0.0", port=8000)
+```
+
+#### API Endpoints
+```bash
+# Health check
+curl http://localhost:8000/health
+
+# List universities
+curl http://localhost:8000/universities
+
+# University info
+curl http://localhost:8000/universities/carleton/info
+
+# Get subjects
+curl http://localhost:8000/universities/uottawa/subjects
+
+# Search courses
+curl "http://localhost:8000/universities/uottawa/courses?subject=CSI&search=web&limit=10"
+
+# Live course data (Carleton only)
+curl "http://localhost:8000/universities/carleton/live-courses?term=winter&year=2025&subjects=COMP,MATH&limit=20&include_ratings=true"
+```
+
+## 🔧 Advanced Usage
+
+### Custom University Provider
+```python
+from uoapi.core import UniversityProvider, University, Subject, Course
+from uoapi.universities import BaseUniversityProvider
+
+class MyUniversityProvider(BaseUniversityProvider):
+    @property
+    def university(self) -> University:
+        return University.MYUNI  # Add to enum first
+    
+    @property  
+    def name(self) -> str:
+        return "My University"
+    
+    def get_subjects(self) -> List[Subject]:
+        # Implement subject scraping/loading
+        return []
+    
+    def get_courses(self, subject_code: str = None) -> List[Course]:
+        # Implement course scraping/loading
+        return []
+
+# Register with service
+from uoapi.services import DefaultCourseService
+service = DefaultCourseService()
+service._providers[University.MYUNI] = MyUniversityProvider()
+```
+
+### Custom CLI Command
+```python
+from uoapi.interfaces.cli.framework import UniversityCommand, registry
+import argparse
+
+class MyCommand(UniversityCommand):
+    @property
+    def name(self) -> str:
+        return "mycmd"
+    
+    @property
+    def help(self) -> str:
+        return "My custom command"
+    
+    @property
+    def description(self) -> str:
+        return "Does something useful"
+    
+    def configure_command_parser(self, parser: argparse.ArgumentParser):
+        parser.add_argument("--option", help="My option")
+        return parser
+    
+    def execute_for_university(self, args, university):
+        # Implement command logic
+        return self.format_output({"result": "success"})
+
+# Register command
+registry.register(MyCommand())
+```
+
+### Configuration
+```python
+from uoapi.utils import get_config
+
+config = get_config()
+
+# Adjust cache settings
+config.cache.ttl_seconds = 7200  # 2 hours
+config.cache.uottawa_ttl = 14400  # 4 hours for UOttawa
+
+# Adjust scraping settings
+config.scraping.timeout_seconds = 60
+config.scraping.concurrent_workers = 8
+
+# API settings
+config.api.port = 9000
+config.api.debug = True
+```
+
+## 📊 Data Models
+
+### Unified Course Model
+```python
+from uoapi.core import Course
+
+# All universities use the same model
+course = Course(
+    course_code="COMP1001",
+    subject_code="COMP", 
+    course_number="1001",
+    title="Introduction to Computing",
+    description="Basic computing concepts...",
+    credits=3,
+    university=University.CARLETON,
+    components=["Lecture", "Laboratory"],
+    prerequisites="None",
+    sections=[...],  # Live sections if available
+    is_offered=True
+)
+```
+
+### Search Results
+```python
+from uoapi.core import SearchResult
+
+result = SearchResult(
+    university=University.UOTTAWA,
+    query="programming",
+    subject_filter="CSI",
+    total_found=25,
+    courses=[...],
+    metadata={"search_method": "text_search"}
+)
+```
+
+### Live Course Discovery
+```python
+from uoapi.core import DiscoveryResult
+
+result = DiscoveryResult(
+    term_code="202501",
+    term_name="Winter 2025",
+    university=University.CARLETON,
+    subjects_queried=["COMP", "MATH"],
+    total_courses=150,
+    courses_offered=142,
+    offering_rate=94.7,
+    processing_time=25.3,
+    courses=[...]
+)
+```
+
+## 🧪 Development
+
+### Setup
 ```bash
 git clone https://github.com/Rain6435/uoapi.git
 cd uoapi
 pip install -e .[tests]
 ```
 
-## Quick Start
-
-### Terminal Usage
+### Testing
 ```bash
-# Get available terms for Carleton
-schedulo-api carleton --available-terms
+# Run all tests
+make test     # or pytest
 
-# Get AERO courses for Fall 2025
-schedulo-api carleton --term fall --year 2025 --courses AERO
+# Test specific components
+pytest tests/core/
+pytest tests/services/
+pytest tests/universities/
 
-# Get University of Ottawa course information
-schedulo-api course --courses CSI --limit 5
+# Test with coverage
+pytest --cov=uoapi tests/
 
-# Get Rate My Professor data
-schedulo-api rmp --school "University of Ottawa" --instructor "John Smith"
+# Type checking
+make check    # or mypy src/
 
-# Start FastAPI server
-schedulo-api server --port 8000
-schedulo-api server --host 0.0.0.0 --port 8080 --reload
+# Linting  
+make lint     # or flake8
+
+# All checks
+make          # test + lint + typecheck
 ```
 
-### Python Code Usage
+### Code Quality
+The refactored codebase maintains high code quality with:
+- **100% type coverage** with mypy
+- **Comprehensive tests** for all components
+- **Consistent formatting** with black
+- **Clean imports** and modular design
+- **Documentation** for all public APIs
+
+## 🔄 Migration Guide
+
+### From Old API
 ```python
-from uoapi.carleton.cli import main as carleton_main
-from uoapi.course.cli import main as course_main
-from uoapi.rmp import get_instructor_rating
-
-# Get Carleton course data
-import argparse
-args = argparse.Namespace(
-    term='fall', year=2025, courses=['AERO'], 
-    subjects=False, available_terms=False,
-    limit=10, workers=4, cookie_file=None
-)
-results = list(carleton_main(args))
-
-# Get instructor rating
-rating = get_instructor_rating("John Smith", "University of Ottawa")
-print(f"Rating: {rating['rating']}/5.0")
-```
-
-## Complete Usage Guide
-
-### University of Ottawa
-
-#### Course Information
-```bash
-# List all subjects
-schedulo-api course
-
-# Get courses for specific subjects  
-schedulo-api course --courses CSI MAT
-
-# Get specific courses only (no subject list)
-schedulo-api course --courses --nosubjects CSI
-
-# Control request timing
-schedulo-api course --courses CSI --waittime 1.0
-```
-
-#### Timetable Queries
-```bash
-# Get timetables for specific courses
-schedulo-api timetable --year 2024 --term fall CSI3140
-
-# Include Rate My Professor ratings
-schedulo-api timetable --year 2024 --term fall --school "University of Ottawa" --include-ratings CSI3140
-```
-
-### Carleton University
-
-#### Available Terms
-```bash
-# Get all available terms for course queries
-schedulo-api carleton --available-terms
-```
-*Output:*
-```json
-{
-  "data": {
-    "available_terms": [
-      {"term_code": "202520", "term_name": "Summer 2025 (May-August)", "year": 2025, "season": "Summer"},
-      {"term_code": "202530", "term_name": "Fall 2025 (September-December)", "year": 2025, "season": "Fall"},
-      {"term_code": "202610", "term_name": "Winter 2026 (January-April)", "year": 2026, "season": "Winter"}
-    ]
-  },
-  "messages": [{"type": "info", "message": "Found 3 available terms"}]
-}
-```
-
-#### Subject Discovery
-```bash
-# List all subjects for a term
-schedulo-api carleton --term fall --year 2025 --subjects
-```
-
-#### Course Queries
-```bash
-# Get courses for specific subjects
-schedulo-api carleton --term fall --year 2025 --courses COMP MATH
-
-# Get all courses for a subject (limited to 10 per subject by default)
-schedulo-api carleton --term fall --year 2025 --courses AERO
-
-# Increase course limit per subject
-schedulo-api carleton --term fall --year 2025 --courses COMP --limit 20
-
-# Use more parallel workers for faster processing
-schedulo-api carleton --term fall --year 2025 --courses COMP MATH --workers 8
-```
-
-**Important:** Always check available terms first! The system will validate that the requested term is available and show helpful error messages:
-
-```bash
-# This will fail with helpful message
-schedulo-api carleton --term fall --year 2024 --courses AERO
-```
-*Output:*
-```json
-{
-  "data": null,
-  "messages": [
-    {"type": "error", "message": "Term fall 2024 (code: 202430) is not available for query"},
-    {"type": "info", "message": "Available terms: Summer 2025 (May-August), Fall 2025 (September-December), Winter 2026 (January-April)"}
-  ]
-}
-```
-
-### Rate My Professor
-
-#### Individual Instructor Lookup
-```bash
-# Get rating for specific instructor
-schedulo-api rmp --school "University of Ottawa" --instructor "John Smith" "Jane Doe"
-
-# Get rating for Carleton instructor  
-schedulo-api rmp --school "Carleton University" --instructor "John Smith"
-
-# Alternative school names are supported
-schedulo-api rmp --school "uottawa" --instructor "John Smith"
-schedulo-api rmp --school "carleton" --instructor "Jane Doe"
-```
-
-### FastAPI Server
-
-#### Starting the Server
-```bash
-# Basic server startup
-schedulo-api server
-
-# Custom host and port
-schedulo-api server --host 0.0.0.0 --port 8080
-
-# Development mode with auto-reload
-schedulo-api server --reload --log-level debug
-
-# Production with multiple workers
-schedulo-api server --workers 4 --host 0.0.0.0 --port 8000
-```
-
-#### API Endpoints
-
-Once the server is running, the following endpoints are available:
-
-**Health Check**
-```bash
-curl http://localhost:8000/health
-```
-*Response:*
-```json
-{
-  "status": "healthy",
-  "available_universities": ["uottawa", "carleton"],
-  "version": "2.3.0"
-}
-```
-
-**List Universities**
-```bash
-curl http://localhost:8000/universities
-```
-
-**University Information**
-```bash
-curl http://localhost:8000/universities/uottawa/info
-curl http://localhost:8000/universities/carleton/info
-```
-
-**University Subjects**
-```bash
-curl http://localhost:8000/universities/uottawa/subjects
-curl http://localhost:8000/universities/carleton/subjects
-```
-
-**Course Search with Filtering**
-```bash
-# Get all courses (limited to 50 by default)
-curl http://localhost:8000/universities/uottawa/courses
-
-# Filter by subject
-curl http://localhost:8000/universities/uottawa/courses?subject=CSI
-
-# Search in course titles and descriptions
-curl http://localhost:8000/universities/uottawa/courses?search=programming
-
-# Combine filters and set limit
-curl http://localhost:8000/universities/uottawa/courses?subject=CSI&search=web&limit=10
-```
-
-**Interactive Documentation**
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-
-## Python Library Usage
-
-### Carleton University Integration
-
-```python
-from uoapi.carleton.discovery import CarletonDiscovery
-from uoapi.carleton.cli import main as carleton_main
-import argparse
-
-# Direct discovery system usage
-discovery = CarletonDiscovery(max_workers=4)
-
-# Get available terms
-terms = discovery.get_available_terms()
-for term_code, term_name in terms:
-    print(f"{term_code}: {term_name}")
-
-# Get subjects for a term
-subjects, session_id = discovery.discover_subjects("202530")  # Fall 2025
-print(f"Found {len(subjects)} subjects")
-
-# Get courses for specific subjects
-courses = discovery.discover_courses("202530", subjects=["AERO"], max_courses_per_subject=10)
-for course in courses:
-    if course.is_offered:
-        print(f"{course.course_code}: {course.catalog_title}")
-        for section in course.sections:
-            print(f"  Section {section.section}: {section.instructor} - {section.status}")
-
-# Using CLI interface programmatically
-args = argparse.Namespace(
-    available_terms=False,
-    subjects=False, 
-    courses=['AERO'],
-    term='fall',
-    year=2025,
-    limit=10,
-    workers=4,
-    cookie_file=None
-)
-
-# This returns a generator of results
-for result in carleton_main(args):
-    import json
-    print(json.dumps(result, indent=2))
-```
-
-### University of Ottawa Integration
-
-```python
-from uoapi.course import scrape_subjects, get_courses
-from uoapi.course.cli import main as course_main
-
-# Direct course system usage
+# Old way
+from uoapi.course.course_info import scrape_subjects, get_courses
 subjects = scrape_subjects()
-print(f"Found {len(subjects)} subjects")
+courses = list(get_courses(subjects[0]['link']))
 
-# Get courses for a specific subject
-csi_subject = next(s for s in subjects if s['subject_code'] == 'CSI')
-courses = list(get_courses(csi_subject['link']))
-for course in courses[:5]:  # First 5 courses
-    print(f"{course['course_code']}: {course['title']}")
+# New way (recommended)
+from uoapi.core import University
+from uoapi.services import DefaultCourseService
 
-# Using CLI interface programmatically
-results = list(course_main(subjects=True, courses=True, subject_list=['CSI'], waittime=0.5))
-for result in results:
-    if 'courses' in result:
-        print(f"Subject: {result['courses']['subject_code']}")
-        print(f"Number of courses: {len(result['courses']['courses'])}")
+service = DefaultCourseService()
+subjects = service.get_subjects(University.UOTTAWA)
+courses = service.get_courses(University.UOTTAWA, subjects[0].code)
 ```
 
-### Rate My Professor Integration
-
+### Legacy Compatibility
 ```python
-from uoapi.rmp import (
-    get_instructor_rating, 
-    get_professor_ratings, 
-    inject_ratings_into_timetable,
-    get_school_by_name
-)
+# Old imports still work
+from uoapi.course import scrape_subjects, get_courses  # ✅ Still works
+from uoapi.carleton.discovery import CarletonDiscovery  # ✅ Still works
+from uoapi.server.app import create_app  # ✅ Still works
 
-# Check supported schools
-school = get_school_by_name("University of Ottawa")
-if school:
-    print(f"School ID: {school['id']}, Name: {school['name']}")
-
-# Get single instructor rating
-rating = get_instructor_rating("John Smith", "University of Ottawa")
-print(f"Instructor: {rating['instructor']}")
-print(f"Rating: {rating['rating']}/5.0")
-print(f"Number of ratings: {rating['num_ratings']}")
-print(f"Department: {rating['department']}")
-
-# Get multiple professor ratings
-professors = [("John", "Smith"), ("Jane", "Doe")]
-ratings = get_professor_ratings(professors, "University of Ottawa")
-for rating in ratings:
-    print(f"{rating['first_name']} {rating['last_name']}: {rating['rating']}/5.0")
-
-# Inject ratings into timetable data
-timetable_data = {
-    "timetables": [
-        {
-            "course_code": "CSI3140",
-            "sections": [
-                {
-                    "components": [
-                        {"instructor": "John Smith"}
-                    ]
-                }
-            ]
-        }
-    ]
-}
-
-enhanced_data = inject_ratings_into_timetable(timetable_data, "University of Ottawa")
-# Now enhanced_data includes instructor ratings for each component
+# But new imports are cleaner
+from uoapi.core import *  # ✅ New unified models
+from uoapi.services import *  # ✅ Business logic
+from uoapi.interfaces.api import create_app  # ✅ Clean API
 ```
 
-### FastAPI Server Integration
-
-```python
-from uoapi.server.app import create_app
-import uvicorn
-
-# Create the FastAPI application
-app = create_app()
-
-# Run the server programmatically
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
-
-# Or use the CLI interface
-from uoapi.server.cli import main as server_main
-import argparse
-
-args = argparse.Namespace(
-    host="127.0.0.1",
-    port=8000,
-    reload=True,
-    log_level="info",
-    workers=1
-)
-server_main(args)
-```
-
-### Error Handling
-
-```python
-from uoapi.carleton.discovery import CarletonDiscovery
-
-try:
-    discovery = CarletonDiscovery()
-    
-    # This might fail if term is invalid or network issues occur
-    courses = discovery.discover_courses("invalid_term", subjects=["COMP"])
-    
-except Exception as e:
-    print(f"Discovery failed: {e}")
-    
-# For individual course errors, check the course.error field
-courses = discovery.discover_courses("202530", subjects=["COMP"])
-for course in courses:
-    if course.error:
-        print(f"Error for {course.course_code}: {course.error_message}")
-    elif course.is_offered:
-        print(f"{course.course_code} is available with {course.sections_found} sections")
-```
-
-## Data Structures
-
-### Carleton University Models
-
-#### Course Object
-```python
-{
-    "course_code": "AERO 2001",
-    "subject_code": "AERO",
-    "course_number": "2001", 
-    "catalog_title": "Aerospace Engineering Graphical Design",
-    "catalog_credits": 0.5,
-    "is_offered": True,
-    "sections_found": 1,
-    "banner_title": "Aerospace Graphical Design",
-    "banner_credits": 0.5,
-    "sections": [
-        {
-            "crn": "30045",
-            "section": "A", 
-            "status": "Full, No Waitlist",
-            "credits": 0.5,
-            "schedule_type": "Lecture",
-            "instructor": "Pakeeza Hafeez",
-            "meeting_times": [
-                {
-                    "start_date": "Sep 03, 2025",
-                    "end_date": "Dec 05, 2025", 
-                    "days": "Mon Wed",
-                    "start_time": "13:05",
-                    "end_time": "14:25"
-                }
-            ],
-            "notes": []
-        }
-    ],
-    "error": False,
-    "error_message": ""
-}
-```
-
-### University of Ottawa Models
-
-#### Course Object
-```python
-{
-    "course_code": "CSI3140",
-    "title": "World Wide Web Programming",
-    "credits": 3,
-    "description": "Introduction to web programming...",
-    "components": ["LECTURE", "LAB"],
-    "prerequisites": "CSI2520, CSI2101",
-    "dependencies": [["CSI2520"], ["CSI2101"]]
-}
-```
-
-### Rate My Professor Models
-
-#### Instructor Rating Object
-```python
-{
-    "instructor": "John Smith",
-    "rating": 4.2,
-    "num_ratings": 15,
-    "department": "Computer Science",
-    "rmp_id": 123456,
-    "would_take_again_percent": 85.0,
-    "avg_difficulty": 3.1
-}
-```
-
-## Output Format
-
-All CLI commands return structured JSON with this format:
-
-```python
-{
-    "data": {
-        # Main response data - varies by command
-        "courses": [...],        # or "subjects", "available_terms", etc.
-        "term_code": "202530",
-        "total_courses": 10,
-        "courses_offered": 5,
-        # ... command-specific fields
-    },
-    "messages": [
-        # Status, info, warning, and error messages
-        {"type": "info", "message": "Found 5/10 courses offered (50.0%)"},
-        {"type": "warning", "message": "2 courses had errors"}
-    ]
-}
-```
-
-## Development
-
-### Requirements
-- Python 3.10+
-- Dependencies: requests, bs4, lxml, pandas, pydantic<2, parsedatetime, fastapi, uvicorn
-
-### Development Commands
-```bash
-# Run tests
-make test     # or make t - Run pytest with coverage
-pytest        # Direct pytest execution
-
-# Code quality
-make check    # or make c - Run mypy type checking  
-make lint     # or make l - Run flake8 linting
-make          # Run all checks (test + lint + typecheck)
-
-# Manual checks
-mypy src/     # Direct type checking
-flake8        # Direct linting
-black .       # Code formatting
-```
-
-### Testing Individual Modules
-```bash
-# Test specific module
-PYTHONPATH=src python3.10 -m pytest tests/carleton/ -v
-
-# Test CLI functionality
-PYTHONPATH=src python3.10 -c "from uoapi.cli import cli; cli(['--help'])"
-
-# Test Carleton integration
-PYTHONPATH=src python3.10 -c "from uoapi.cli import cli; cli(['carleton', '--available-terms'])"
-
-# Test server functionality
-PYTHONPATH=src python3.10 -c "from uoapi.server.app import create_app; print('✓ Server app created successfully')"
-```
-
-## Troubleshooting
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-1. **"Term not available" error**: Always check available terms first using `schedulo-api carleton --available-terms`
-
-2. **Rate My Professor not working**: Make sure you're using the exact school names: "University of Ottawa", "Carleton University", "uottawa", or "carleton"
-
-3. **Import errors**: Make sure you installed the package correctly and are using Python 3.10+
-
-4. **Network timeouts**: Carleton queries can be slow; try reducing the number of workers or subjects queried at once
-
-5. **Server won't start**: Make sure FastAPI and uvicorn are installed: `pip install 'schedulo-api[server]'` or `pip install fastapi uvicorn`
+1. **Import errors**: Ensure Python 3.10+ and proper installation
+2. **University not supported**: Check `service.get_all_universities()`
+3. **Term validation**: Use `timetable_service.get_available_terms()` first
+4. **Rate limiting**: Reduce concurrent workers if getting blocked
+5. **Live data not available**: Only Carleton supports live timetable data currently
 
 ### Debug Mode
-```bash
-# Enable verbose logging
-schedulo-api --verbose carleton --available-terms
-
-# For Python usage
+```python
 import logging
 logging.basicConfig(level=logging.DEBUG)
+
+# Or via CLI
+uoapi --verbose course -u carleton -c COMP
 ```
 
-## Contributing
+### Configuration Issues
+```python
+from uoapi.utils import get_config, reload_config
 
-Contributions are welcome! Please:
+# Check current config
+config = get_config()
+print(config.to_dict())
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests: `make test`
-5. Run linting: `make lint`  
-6. Submit a pull request
+# Reload with different environment
+reload_config("development")
+```
 
-### Adding New Universities
+## 🎯 What's New in v3.0
 
-To add support for a new university:
+### Architecture Improvements
+- **🏗️ Clean Architecture**: Proper layered design with separation of concerns
+- **🔧 Service Layer**: Business logic separated from data access
+- **🎯 Single Responsibility**: Each module has one clear purpose  
+- **🔄 Dependency Inversion**: High-level modules don't depend on low-level details
 
-1. Create a new module in `src/uoapi/new_university/`
-2. Add the module name to `src/uoapi/__modules__`
-3. Implement CLI interface with `parser()` and `cli()` functions
-4. Follow the existing patterns for JSON output format
-5. Add comprehensive tests
+### Developer Experience
+- **✅ Type Safety**: Complete type annotations with Pydantic
+- **🧪 Better Testing**: Clear boundaries enable comprehensive testing
+- **📚 Better Documentation**: Comprehensive examples and API docs
+- **🔧 Easy Extension**: Add new universities via simple interfaces
 
-## What's New in This Fork
+### User Experience  
+- **🎨 Consistent APIs**: Same patterns across all universities
+- **⚡ Better Performance**: Improved caching and parallel processing
+- **🔍 Better Error Messages**: Structured exceptions with helpful details
+- **📊 Richer Data**: Enhanced models with metadata and validation
 
-- **Complete Carleton University integration** with real-time course data
-- **Rate My Professor GraphQL API integration** for both universities  
-- **FastAPI REST API server** with comprehensive endpoints for HTTP access
-- **Term validation** - automatically checks if requested terms are available
-- **Enhanced error handling** with helpful error messages
-- **Comprehensive Python library interface** for programmatic usage
-- **Parallel processing** for efficient data collection
-- **Improved CLI with consistent JSON output format**
+## 🤝 Contributing
 
-## Acknowledgments
+We welcome contributions! The new architecture makes it much easier to contribute:
 
-- Original [uoapi](https://github.com/andrewnags/uoapi) by Andrew Nagarajah
-- University of Ottawa and Carleton University for providing public data access
-- Rate My Professor for their GraphQL API
+1. **Add Universities**: Implement `UniversityProvider` interface
+2. **Add Features**: Extend service classes with new functionality  
+3. **Add Interfaces**: Create new CLI commands or API endpoints
+4. **Fix Bugs**: Clear modular structure makes debugging easier
 
-## License
+### Contribution Process
+```bash
+# 1. Fork and clone
+git clone https://github.com/your-username/uoapi.git
+
+# 2. Create feature branch
+git checkout -b feature/my-feature
+
+# 3. Make changes and test
+make test
+make lint
+
+# 4. Submit PR
+git push origin feature/my-feature
+```
+
+## 📜 License
 
 GNU LGPLv3.0 - See the `COPYING` and `COPYING.LESSER` files for details.
 
-This license permits use, distribution, and modification in open source projects (with license propagation), and permits use and distribution in closed source projects.
+## 🙏 Acknowledgments
+
+- Original [uoapi](https://github.com/andrewnags/uoapi) by Andrew Nagarajah
+- University of Ottawa and Carleton University for public data access
+- Rate My Professor for their API
+- The Python community for excellent libraries and tools
+
+---
+
+**Ready to explore university course data with a clean, modern API?** 
+```bash
+pip install schedulo-api
+```
