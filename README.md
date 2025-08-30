@@ -92,22 +92,26 @@ if University.CARLETON in timetable_service.get_supported_universities():
 
 #### Command Line Interface
 ```bash
-# Get course information
-uoapi course -u carleton -c COMP MATH
-uoapi course -u uottawa --search "web programming"
+# List available terms
+schedulo terms carleton
 
-# Get live timetable data
-uoapi timetable -u carleton --term 202501 --subjects COMP,MATH
-uoapi timetable -u carleton --term 202501 --subjects COMP --ratings
+# List available subjects
+schedulo subjects carleton
+
+# Get courses for subjects
+schedulo courses carleton fall2025 COMP MATH
+
+# Get specific course details
+schedulo course carleton COMP1005 fall2025
 
 # Start FastAPI server
-uoapi server --port 8000 --reload
+schedulo server --port 8000
 ```
 
 #### FastAPI Server
 ```bash
 # Start the server
-uoapi server --host 0.0.0.0 --port 8000
+schedulo server --port 8000
 
 # Interactive docs available at:
 # http://localhost:8000/docs
@@ -206,37 +210,45 @@ enhanced_courses = service.inject_ratings_into_courses(courses, University.UOTTA
 
 ### CLI Usage
 
-#### Course Commands
+The clean, unified CLI provides simple commands for accessing university data:
+
+#### Basic Commands
 ```bash
-# List subjects for a university
-uoapi course -u uottawa
+# List available terms
+schedulo terms carleton
 
-# Get courses for specific subjects
-uoapi course -u carleton -c COMP MATH PHYS
+# List available subjects
+schedulo subjects carleton
 
-# Search courses
-uoapi course -u uottawa --search "artificial intelligence"
+# Get courses for specific subjects and term
+schedulo courses carleton fall2025 COMP MATH --limit 20
 
-# Get courses without showing subjects table
-uoapi course -u carleton -c COMP -s
+# Get detailed information for a specific course
+schedulo course carleton COMP1005 fall2025
+
+# Start the API server
+schedulo server --port 8000
 ```
 
-#### Timetable Commands  
+#### Enhanced Section Parsing
+The CLI now captures **complete section data** including all lectures, tutorials, and labs:
+
 ```bash
-# Show available terms
-uoapi timetable -u carleton
+# Example: COMP 1005 retrieves all 13 sections (4 lectures + 9 tutorials)
+schedulo course carleton COMP1005 fall2025
 
-# Get live course data
-uoapi timetable -u carleton --term 202501 --subjects COMP,MATH
-
-# Include professor ratings
-uoapi timetable -u carleton --term 202501 --subjects COMP --ratings
-
-# Filter specific courses
-uoapi timetable -u carleton --term 202501 --subjects COMP --courses COMP1001,COMP1002
-
-# Adjust query limits
-uoapi timetable -u carleton --term 202501 --subjects COMP --limit 30
+# Output shows:
+#   Sections Summary:
+#     Total: 13
+#     Lectures: 4  
+#     Tutorials: 9
+#   
+#   All Sections:
+#     A (Lecture) - CRN 10001 - Open
+#     B (Lecture) - CRN 10002 - Open
+#     T01 (Tutorial) - CRN 10101 - Open
+#     T02 (Tutorial) - CRN 10102 - Wait List
+#     ...
 ```
 
 ### REST API Usage
@@ -505,7 +517,13 @@ print(config.to_dict())
 reload_config("development")
 ```
 
-## 🎯 What's New in v3.0
+## 🎯 What's New in v3.2
+
+### Major Enhancements
+- **🔧 Enhanced Section Parsing**: Complete retrieval of all course sections, lectures, tutorials, and labs
+- **🎨 Clean CLI Interface**: Simplified commands with intuitive structure (`schedulo` instead of complex nested commands)
+- **⚡ Improved Data Accuracy**: Fixed Banner system parsing to capture all available course sections
+- **🚀 Better User Experience**: Streamlined commands and comprehensive section information
 
 ### Architecture Improvements
 - **🏗️ Clean Architecture**: Proper layered design with separation of concerns
@@ -563,7 +581,8 @@ GNU LGPLv3.0 - See the `COPYING` and `COPYING.LESSER` files for details.
 
 ---
 
-**Ready to explore university course data with a clean, modern API?** 
+**Ready to explore university course data with enhanced section parsing and clean CLI?** 
 ```bash
 pip install schedulo-api
+schedulo terms carleton  # Get started!
 ```
