@@ -6,7 +6,8 @@ Usage:
   schedulo terms carleton                          # List available terms
   schedulo courses uottawa fall2025 CSI           # List CSI courses
   schedulo course carleton COMP1005 fall2025      # Get course details
-  schedulo subjects uottawa                        # List subjects
+  schedulo subjects uottawa                        # List subjects  
+  schedulo professor John Smith carleton          # Get professor ratings
   schedulo server                                  # Start API server
 """
 
@@ -171,6 +172,84 @@ def cmd_server(args):
     uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="info")
 
 
+def cmd_professor(args):
+    """Get Rate My Professor ratings for an instructor."""
+    from uoapi.rmp.rate_my_prof import get_professor_ratings
+    
+    # Map university names to school names for RMP
+    university_to_school = {
+        "carleton": "Carleton University",
+        "cu": "Carleton University", 
+        "uottawa": "University of Ottawa",
+        "ottawa": "University of Ottawa",
+        "uo": "University of Ottawa"
+    }
+    
+    university = args.university.lower()
+    if university not in university_to_school:
+        print(f"Error: University '{args.university}' not supported.")
+        print("Available universities: carleton, uottawa")
+        return
+    
+    school_name = university_to_school[university]
+    
+    try:
+        print(f"Searching for {args.first_name} {args.last_name} at {school_name}...")
+        
+        # Get ratings using RMP API
+        ratings = get_professor_ratings([(args.first_name, args.last_name)], school_name)
+        
+        if not ratings:
+            print(f"No ratings found for {args.first_name} {args.last_name} at {school_name}")
+            print("\nTips:")
+            print("- Try different name variations (nicknames, middle names)")
+            print("- Check spelling of first and last name")
+            print("- Some professors may not be on Rate My Professor")
+            return
+        
+        professor = ratings[0]
+        
+        print(f"\n📊 Professor Rating: {args.first_name} {args.last_name}")
+        print("=" * 50)
+        
+        if professor.get("rating"):
+            print(f"Overall Rating: {professor['rating']:.1f}/5.0 ⭐")
+        else:
+            print("Overall Rating: Not available")
+            
+        print(f"Number of Ratings: {professor.get('num_ratings', 0)}")
+        
+        if professor.get('department'):
+            print(f"Department: {professor['department']}")
+            
+        if professor.get('would_take_again_percent') is not None:
+            print(f"Would Take Again: {professor['would_take_again_percent']:.0f}%")
+            
+        if professor.get('avg_difficulty') is not None:
+            print(f"Average Difficulty: {professor['avg_difficulty']:.1f}/5.0")
+            
+        if professor.get('rmp_id'):
+            print(f"Rate My Professor ID: {professor['rmp_id']}")
+            print(f"Profile URL: https://www.ratemyprofessors.com/professor/{professor['rmp_id']}")
+        
+        # Provide interpretation
+        rating = professor.get('rating')
+        if rating:
+            print(f"\n📝 Rating Interpretation:")
+            if rating >= 4.0:
+                print("🟢 Excellent professor (4.0+ rating)")
+            elif rating >= 3.0:
+                print("🟡 Good professor (3.0+ rating)")  
+            elif rating >= 2.0:
+                print("🟠 Fair professor (2.0+ rating)")
+            else:
+                print("🔴 Below average professor (<2.0 rating)")
+                
+    except Exception as e:
+        print(f"Error retrieving professor ratings: {e}")
+        print("This may be due to network issues or Rate My Professor API changes.")
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -209,6 +288,15 @@ def main():
     course_parser.add_argument("course_code", help="Course code (COMP1005, CSI3140)")
     course_parser.add_argument("term", help="Term (fall2025, winter2025, 202530)")
     course_parser.set_defaults(func=cmd_course)
+
+    # professor
+    professor_parser = subparsers.add_parser(
+        "professor", help="Get Rate My Professor ratings for an instructor"
+    )
+    professor_parser.add_argument("first_name", help="Professor's first name")
+    professor_parser.add_argument("last_name", help="Professor's last name")
+    professor_parser.add_argument("university", help="University (carleton, uottawa)")
+    professor_parser.set_defaults(func=cmd_professor)
 
     # server
     server_parser = subparsers.add_parser("server", help="Start API server")

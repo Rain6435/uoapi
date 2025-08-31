@@ -226,6 +226,10 @@ schedulo courses carleton fall2025 COMP MATH --limit 20
 # Get detailed information for a specific course
 schedulo course carleton COMP1005 fall2025
 
+# Get professor ratings from Rate My Professor
+schedulo professor John Smith carleton
+schedulo professor Lucia Moura uottawa
+
 # Start the API server
 schedulo server --port 8000
 ```
@@ -249,6 +253,40 @@ schedulo course carleton COMP1005 fall2025
 #     T01 (Tutorial) - CRN 10101 - Open
 #     T02 (Tutorial) - CRN 10102 - Wait List
 #     ...
+```
+
+#### Professor Rating Lookup
+Get comprehensive Rate My Professor data for university instructors:
+
+```bash
+# Basic professor lookup
+schedulo professor Rami Abielmona uottawa
+
+# Output example:
+# 📊 Professor Rating: Rami Abielmona
+# ==================================================
+# Overall Rating: 4.5/5.0 ⭐
+# Number of Ratings: 57
+# Department: Engineering
+# Would Take Again: 85%
+# Average Difficulty: 3.3/5.0
+# Rate My Professor ID: 232123
+# Profile URL: https://www.ratemyprofessors.com/professor/232123
+#
+# 📝 Rating Interpretation:
+# 🟢 Excellent professor (4.0+ rating)
+
+# Works with both universities
+schedulo professor Bo Sun uottawa      # University of Ottawa
+schedulo professor John Smith carleton # Carleton University
+
+# Handles various name formats and provides helpful error messages
+schedulo professor NonExistent Name uottawa
+# No ratings found for NonExistent Name at University of Ottawa
+# Tips:
+# - Try different name variations (nicknames, middle names)  
+# - Check spelling of first and last name
+# - Some professors may not be on Rate My Professor
 ```
 
 ### REST API Usage
@@ -523,8 +561,9 @@ reload_config("development")
 ### Major Enhancements
 - **🔧 Enhanced Section Parsing**: Complete retrieval of all course sections, lectures, tutorials, and labs
 - **🎨 Clean CLI Interface**: Simplified commands with intuitive structure (`schedulo` instead of complex nested commands)
-- **⚡ Improved Data Accuracy**: Fixed Banner system parsing to capture all available course sections
+- **⚡ Improved Data Accuracy**: Fixed Banner system parsing to capture all available course sections  
 - **🚀 Better User Experience**: Streamlined commands and comprehensive section information
+- **👨‍🏫 Professor Ratings**: New `schedulo professor` command with Rate My Professor integration
 
 ### Architecture Improvements
 - **🏗️ Clean Architecture**: Proper layered design with separation of concerns
