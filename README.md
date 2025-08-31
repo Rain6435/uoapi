@@ -279,8 +279,9 @@ curl http://localhost:8000/universities/uottawa/subjects
 # Search courses
 curl "http://localhost:8000/universities/uottawa/courses?subject=CSI&search=web&limit=10"
 
-# Live course data (Carleton only)
+# Live course data (both universities)
 curl "http://localhost:8000/universities/carleton/live-courses?term=winter&year=2025&subjects=COMP,MATH&limit=20&include_ratings=true"
+curl "http://localhost:8000/universities/uottawa/live-courses?term=fall&year=2025&subjects=CSI,CEG&limit=20"
 ```
 
 ## 🔧 Advanced Usage
@@ -494,7 +495,7 @@ from uoapi.interfaces.api import create_app  # ✅ Clean API
 2. **University not supported**: Check `service.get_all_universities()`
 3. **Term validation**: Use `timetable_service.get_available_terms()` first
 4. **Rate limiting**: Reduce concurrent workers if getting blocked
-5. **Live data not available**: Only Carleton supports live timetable data currently
+5. **Live data not available**: Both Carleton and UOttawa support live timetable data
 
 ### Debug Mode
 ```python

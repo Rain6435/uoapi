@@ -7,4 +7,4 @@ using the service layer architecture.
 
 from .app import create_app
 
-__all__ = ['create_app']
+__all__ = ["create_app"]

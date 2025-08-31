@@ -80,18 +80,16 @@ class CarletonDiscovery:
     def _load_catalog(self):
         """Load catalog data"""
         from uoapi.discovery.discovery_service import get_assets_path
-        
+
         try:
             # Use the discovery service to get the proper assets path
             assets_path = get_assets_path()
             catalog_path = assets_path / "carleton" / "courses.json"
-            
+
             with open(catalog_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 catalog_data = data.get("subjects", {})
-                total_courses = sum(
-                    len(courses) for courses in catalog_data.values()
-                )
+                total_courses = sum(len(courses) for courses in catalog_data.values())
                 logger.info(
                     f"Loaded catalog: {len(catalog_data)} subjects, "
                     f"{total_courses} courses from {catalog_path}"
@@ -209,7 +207,10 @@ class CarletonDiscovery:
                 ("sel_sess", "dummy"),
                 ("sel_attr", "dummy"),
                 ("sel_levl", "dummy"),
-                ("sel_schd", "dummy"),  # Don't filter by schedule type to get all sections
+                (
+                    "sel_schd",
+                    "dummy",
+                ),  # Don't filter by schedule type to get all sections
                 ("sel_insm", "dummy"),
                 ("sel_link", "dummy"),
                 ("sel_wait", "dummy"),
@@ -296,23 +297,34 @@ class CarletonDiscovery:
             for i, table in enumerate(all_tables):
                 rows = table.find_all("tr")
                 table_text = table.get_text()
-                logger.debug(f"Table {i}: {len(rows)} rows, has_crn: {'CRN' in table_text}, has_subject: {'Subject' in table_text}")
+                logger.debug(
+                    f"Table {i}: {len(rows)} rows, has_crn: {'CRN' in table_text}, has_subject: {'Subject' in table_text}"
+                )
                 # Look for tables containing course data (has CRN, Subject headers or course codes)
                 if len(rows) > max_rows and (
-                    "CRN" in table_text and "Subject" in table_text and 
-                    (subject_code in table_text or any(keyword in table_text for keyword in ["Status", "Credits", "Schedule"]))
+                    "CRN" in table_text
+                    and "Subject" in table_text
+                    and (
+                        subject_code in table_text
+                        or any(
+                            keyword in table_text
+                            for keyword in ["Status", "Credits", "Schedule"]
+                        )
+                    )
                 ):
                     results_table = table
                     max_rows = len(rows)
-                    logger.debug(f"Selected table {i} with {max_rows} rows for course data")
-            
+                    logger.debug(
+                        f"Selected table {i} with {max_rows} rows for course data"
+                    )
+
             if results_table:
                 rows = results_table.find_all("tr")
                 current_section = None
 
                 for row in rows:
                     cells = row.find_all("td")
-                    
+
                     # Check if this is a main section row (has CRN, Section, etc.)
                     # Look for rows with sufficient cells that contain a CRN
                     if len(cells) >= 8:  # Reduced from 11 to catch more sections
@@ -320,44 +332,60 @@ class CarletonDiscovery:
                             # Try to find CRN in different positions
                             crn = ""
                             crn_cell_idx = None
-                            for i, cell in enumerate(cells[:5]):  # Check first 5 cells for CRN
+                            for i, cell in enumerate(
+                                cells[:5]
+                            ):  # Check first 5 cells for CRN
                                 cell_text = cell.get_text().strip()
                                 crn_link = cell.find("a")
                                 if crn_link:
                                     crn_text = crn_link.get_text().strip()
                                 else:
                                     crn_text = cell_text
-                                
+
                                 # CRN is typically 5 digits
                                 if crn_text.isdigit() and len(crn_text) == 5:
                                     crn = crn_text
                                     crn_cell_idx = i
                                     break
-                            
+
                             if not crn:
                                 continue  # Skip rows without valid CRN
-                            
+
                             # Skip duplicate CRNs
                             if any(section.crn == crn for section in sections_data):
                                 logger.debug(f"Skipping duplicate CRN {crn}")
                                 continue
-                            
+
                             # Extract other fields relative to CRN position
                             # Standard Banner layout: Status, CRN, Subject, Crse, Section, Campus, Credits, Title, Schedule Type, Days, Time, Instructor
-                            status = cells[max(0, crn_cell_idx-1)].get_text().strip() if crn_cell_idx > 0 else ""
-                            
+                            status = (
+                                cells[max(0, crn_cell_idx - 1)].get_text().strip()
+                                if crn_cell_idx > 0
+                                else ""
+                            )
+
                             # Find section identifier - typically 1-2 positions after CRN
                             section = ""
-                            for i in range(crn_cell_idx + 1, min(len(cells), crn_cell_idx + 4)):
+                            for i in range(
+                                crn_cell_idx + 1, min(len(cells), crn_cell_idx + 4)
+                            ):
                                 cell_text = cells[i].get_text().strip()
-                                if cell_text and not cell_text.isdigit() and len(cell_text) <= 4 and cell_text != subject_code and cell_text not in ["COMP", "1005"]:  # Section codes are short and not subject/course
+                                if (
+                                    cell_text
+                                    and not cell_text.isdigit()
+                                    and len(cell_text) <= 4
+                                    and cell_text != subject_code
+                                    and cell_text not in ["COMP", "1005"]
+                                ):  # Section codes are short and not subject/course
                                     section = cell_text
                                     break
-                            
+
                             # Find credits - look for numeric values
                             credits = 0.0
                             credits_text = ""
-                            for i in range(crn_cell_idx + 2, min(len(cells), crn_cell_idx + 6)):
+                            for i in range(
+                                crn_cell_idx + 2, min(len(cells), crn_cell_idx + 6)
+                            ):
                                 cell_text = cells[i].get_text().strip()
                                 try:
                                     if cell_text and float(cell_text) > 0:
@@ -366,10 +394,18 @@ class CarletonDiscovery:
                                         break
                                 except ValueError:
                                     continue
-                            
+
                             # Find schedule type - keywords like "Lecture", "Tutorial", "Laboratory"
                             schedule_type = ""
-                            schedule_keywords = ["Lecture", "Tutorial", "Laboratory", "Lab", "Seminar", "Workshop", "Practicum"]
+                            schedule_keywords = [
+                                "Lecture",
+                                "Tutorial",
+                                "Laboratory",
+                                "Lab",
+                                "Seminar",
+                                "Workshop",
+                                "Practicum",
+                            ]
                             for cell in cells[crn_cell_idx:]:
                                 cell_text = cell.get_text().strip()
                                 for keyword in schedule_keywords:
@@ -378,25 +414,33 @@ class CarletonDiscovery:
                                         break
                                 if schedule_type:
                                     break
-                            
+
                             if not schedule_type:
                                 schedule_type = "Lecture"  # Default assumption
-                            
+
                             # Skip sections with empty names unless it's clearly a main lecture
                             if not section:
                                 if schedule_type == "Lecture":
                                     # Try to infer section name from position or default to A
-                                    section = "A"  # Default for unnamed lecture sections
+                                    section = (
+                                        "A"  # Default for unnamed lecture sections
+                                    )
                                 else:
-                                    logger.debug(f"Skipping section with no name and CRN {crn}")
+                                    logger.debug(
+                                        f"Skipping section with no name and CRN {crn}"
+                                    )
                                     continue
-                            
+
                             # Find instructor - typically in the last few cells, look for names
                             instructor = "TBA"
                             for cell in cells[-3:]:  # Check last 3 cells for instructor
                                 cell_text = cell.get_text().strip()
                                 # Simple heuristic: if it contains letters and spaces, might be a name
-                                if cell_text and any(c.isalpha() for c in cell_text) and len(cell_text) > 3:
+                                if (
+                                    cell_text
+                                    and any(c.isalpha() for c in cell_text)
+                                    and len(cell_text) > 3
+                                ):
                                     instructor = cell_text
                                     break
 
@@ -414,7 +458,9 @@ class CarletonDiscovery:
                                 notes=[],
                             )
                             sections_data.append(current_section)
-                            logger.debug(f"Added section {section} ({schedule_type}) with CRN {crn}")
+                            logger.debug(
+                                f"Added section {section} ({schedule_type}) with CRN {crn}"
+                            )
 
                         except (IndexError, AttributeError, ValueError) as e:
                             logger.debug(f"Skipped row due to parsing error: {e}")

@@ -49,7 +49,7 @@ try:
             pass
 
     from . import cli
-    
+
 except Exception:
     # If legacy loading fails, continue with just new architecture
     legacy_modules = []
@@ -57,17 +57,15 @@ except Exception:
 # Export new architecture
 __all__ = [
     # New architecture
-    'core',
-    'universities', 
-    'services',
-    'interfaces',
-    'utils',
-    
+    "core",
+    "universities",
+    "services",
+    "interfaces",
+    "utils",
     # Version and config
-    '__version__',
-    'log_config',
-    
+    "__version__",
+    "log_config",
     # Legacy compatibility
-    'cli_tools',
-    'cli',
+    "cli_tools",
+    "cli",
 ] + legacy_modules

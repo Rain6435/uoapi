@@ -28,8 +28,7 @@ CREDIT_COUNT = (
     r"(?: ou [A-Z]{3})* de niveau \d000(?: ou supérieur)*|universitaire)|"
     r"\d+(?: course)? units (?:of|in)(?: %s)? \(?(?:[A-Z]{3}\)?"
     r"(?: or [A-Z]{3})*(?: courses)? at(?: the| level)? \d000(?: level)?"
-    r"(?: or above)?|university-level courses?))"
-    % (FACULTIES, FACULTIES)
+    r"(?: or above)?|university-level courses?))" % (FACULTIES, FACULTIES)
 )
 
 # Special program patterns
@@ -49,7 +48,7 @@ PARSABLE_CODES = r"(?:\(*(?:%s)\)*(?:, |/| or | ou | and | et |%s)?)+" % (
 # Compiled regex patterns for common use
 class CompiledPatterns:
     """Container for compiled regex patterns."""
-    
+
     # Basic patterns
     course_code = re.compile(COURSE_CODE_PATTERN)
     code_groups = re.compile(CODE_GROUPS_PATTERN)
@@ -59,18 +58,18 @@ class CompiledPatterns:
     subject = re.compile(r"\([A-Z]{3}\)")
     href = re.compile(r"[/]{0,1}en/courses/[A-Za-z]{1,}[/]{0,1}")
     numbers = re.compile(r"[0-9]{1,}")
-    
+
     # Prerequisite patterns
     class Prerequisites:
         """Prerequisite-specific patterns."""
-        
+
         not_combined_for_credits = re.compile(
             r"(?:(?<=^(?:(?:The )?[Cc]ourses |Les cours ))%s(?=(?: cannot be combined for "
             r"(?:units|credits)$| ne peuvent être combinés pour l'obtention de crédits$))|"
             r"(?<=This course cannot be taken for units by any student who has previously "
             r"received units for )%s$)" % (PARSABLE_CODES, COURSE_CODE_PATTERN)
         )
-        
+
         no_credits_in_program = re.compile(
             r"(?:This course cannot count for unit in any program in the Faculty of |"
             r"Prerequisite: This course cannot count as a %s elective for students in the "
@@ -79,19 +78,24 @@ class CompiledPatterns:
             r"en %s pour les étudiants et étudiantes de la Faculté des )%s"
             % (FACULTIES, FACULTIES, FACULTIES)
         )
-        
+
         prerequisites = re.compile(
-            r"(?<=^(?:/ )?(?:Prerequisite|Préalable)s?\s*:\s*(?:One of )?)%s$" % PARSABLE_CODES
+            r"(?<=^(?:/ )?(?:Prerequisite|Préalable)s?\s*:\s*(?:One of )?)%s$"
+            % PARSABLE_CODES
         )
-        
+
         corequisite = re.compile(
             r"(?:Corequisite|Concomitant)\s*:\s*%s|%s(?= are prerequisite or corequisite to %s$)|"
-            r"(?<=Les cours )%s(?= sont préalables ou concomitants à %s$)" % (
-                PARSABLE_CODES, PARSABLE_CODES, COURSE_CODE_PATTERN,
-                PARSABLE_CODES, COURSE_CODE_PATTERN
+            r"(?<=Les cours )%s(?= sont préalables ou concomitants à %s$)"
+            % (
+                PARSABLE_CODES,
+                PARSABLE_CODES,
+                COURSE_CODE_PATTERN,
+                PARSABLE_CODES,
+                COURSE_CODE_PATTERN,
             )
         )
-        
+
         cgpa_requirements = re.compile(
             r"(?:Prerequisite: The student must have a minimum CGPA of \d(?:\.|,)\d|"
             r"Préalable : L'étudiant ou l'étudiante doit avoir conservé une MPC minimale de "
@@ -102,35 +106,38 @@ class CompiledPatterns:
             r"of their program| et ayant réussi tous les cours [A-Z]{3} du tronc commun de niveaux "
             r"1000(?: et 2000)? de leur programme)?$"
         )
-        
+
         prior_knowledge = re.compile(
             r"Prerequisites: familiarity with basic concepts in .*|(?:or )?A basic knowledge of .*$|"
             r"Prerequisite: Some familiarity with .*"
         )
-        
+
         additional_prereqs = re.compile(
             r"Additional prerequisites may be imposed depending on the topic|"
             r"Des préalables supplémentaires peuvent s'appliquer selon le sujet du cours"
         )
-        
+
         permission = re.compile(
             r"Permission of the Department is required$|Permission du Département est requise.?$"
         )
-        
+
         interview = re.compile(
             r"Interview with Professor is required$|Entrevue avec le professeur est requise$"
         )
-        
+
         also_offered_as = re.compile(
-            r"(?<=^(?:Also offered as |Aussi offert sous la cote ))%s$" % COURSE_CODE_PATTERN
+            r"(?<=^(?:Also offered as |Aussi offert sous la cote ))%s$"
+            % COURSE_CODE_PATTERN
         )
-        
+
         primarily_intended_for = re.compile(
             r"[Tt]his course is .* for .*$|Ce cours .* principalement(?: destiné)? aux "
             r"étudiants et étudiantes .*$"
         )
-        
-        previously = re.compile(r"(?:Previously|Antérieurement) %s" % COURSE_CODE_PATTERN)
+
+        previously = re.compile(
+            r"(?:Previously|Antérieurement) %s" % COURSE_CODE_PATTERN
+        )
 
 
 # Create instances for easy access
@@ -141,10 +148,10 @@ prereq_patterns = CompiledPatterns.Prerequisites()
 def extract_course_codes(text: str) -> list[str]:
     """
     Extract all course codes from text.
-    
+
     Args:
         text: Text to search for course codes
-        
+
     Returns:
         List of course codes found
     """
@@ -154,51 +161,51 @@ def extract_course_codes(text: str) -> list[str]:
 def extract_subject_code(course_code: str) -> str:
     """
     Extract subject code from a course code.
-    
+
     Args:
         course_code: Full course code (e.g., "CSI3140")
-        
+
     Returns:
         Subject code (e.g., "CSI")
     """
-    match = patterns.code_groups.match(course_code.replace(' ', ''))
+    match = patterns.code_groups.match(course_code.replace(" ", ""))
     return match.group(1) if match else course_code
 
 
 def extract_course_number(course_code: str) -> str:
     """
     Extract course number from a course code.
-    
+
     Args:
         course_code: Full course code (e.g., "CSI3140")
-        
+
     Returns:
         Course number (e.g., "3140")
     """
-    match = patterns.code_groups.match(course_code.replace(' ', ''))
+    match = patterns.code_groups.match(course_code.replace(" ", ""))
     return match.group(2) if match else course_code
 
 
 def normalize_course_code(course_code: str) -> str:
     """
     Normalize course code format.
-    
+
     Args:
         course_code: Course code to normalize
-        
+
     Returns:
         Normalized course code (uppercase, no spaces)
     """
-    return course_code.upper().replace(' ', '')
+    return course_code.upper().replace(" ", "")
 
 
 def extract_credits(text: str) -> str:
     """
     Extract credit information from text.
-    
+
     Args:
         text: Text to search for credit information
-        
+
     Returns:
         Credit string if found, empty string otherwise
     """
@@ -209,14 +216,14 @@ def extract_credits(text: str) -> str:
 def is_valid_course_code(code: str) -> bool:
     """
     Check if a string is a valid course code.
-    
+
     Args:
         code: String to check
-        
+
     Returns:
         True if valid course code format, False otherwise
     """
-    return bool(patterns.course_code.fullmatch(code.replace(' ', '')))
+    return bool(patterns.course_code.fullmatch(code.replace(" ", "")))
 
 
 # Legacy compatibility - maintain the old interface

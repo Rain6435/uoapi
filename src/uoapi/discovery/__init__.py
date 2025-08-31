@@ -22,6 +22,6 @@ __all__ = [
     "cli",
     "py_cli",
     "cli_help",
-    "cli_description", 
+    "cli_description",
     "cli_epilog",
 ]

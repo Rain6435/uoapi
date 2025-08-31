@@ -11,8 +11,8 @@ from .rating_service import DefaultRatingService
 from .discovery_service import DefaultDiscoveryService
 
 __all__ = [
-    'DefaultCourseService',
-    'DefaultTimetableService',
-    'DefaultRatingService',
-    'DefaultDiscoveryService',
+    "DefaultCourseService",
+    "DefaultTimetableService",
+    "DefaultRatingService",
+    "DefaultDiscoveryService",
 ]

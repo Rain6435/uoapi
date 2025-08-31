@@ -130,18 +130,21 @@ def cli(args=None):
     if args is None:
         print("Did not receive any arguments", file=sys.stderr)
         sys.exit(1)
-    
+
     # Check university parameter
-    university = getattr(args, 'university', None)
+    university = getattr(args, "university", None)
     if not university:
         print("University parameter is required", file=sys.stderr)
         sys.exit(1)
-    
+
     # Only University of Ottawa is supported for timetable module
-    if university.lower() not in ['uottawa', 'university of ottawa']:
-        print(f"Timetable module only supports University of Ottawa, got: {university}", file=sys.stderr)
+    if university.lower() not in ["uottawa", "university of ottawa"]:
+        print(
+            f"Timetable module only supports University of Ottawa, got: {university}",
+            file=sys.stderr,
+        )
         sys.exit(1)
-    
+
     if args.available:
         print(json.dumps(available(args.retries)))
     elif args.year is None:

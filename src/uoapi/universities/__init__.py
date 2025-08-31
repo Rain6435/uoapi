@@ -10,7 +10,7 @@ from .uottawa import UOttawaProvider
 from .carleton import CarletonProvider
 
 __all__ = [
-    'BaseUniversityProvider',
-    'UOttawaProvider',
-    'CarletonProvider',
+    "BaseUniversityProvider",
+    "UOttawaProvider",
+    "CarletonProvider",
 ]
