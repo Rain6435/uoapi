@@ -223,6 +223,11 @@ schedulo subjects carleton
 # Get courses for specific subjects and term
 schedulo courses carleton fall2025 COMP MATH --limit 20
 
+# Get catalog courses (no term required, no live sections)
+schedulo courses carleton COMP --catalog --limit 10        # Carleton: 4-letter subjects
+schedulo courses uottawa CSI --catalog --limit 10          # UOttawa: 3-letter subjects  
+schedulo courses carleton --catalog --limit 20             # All catalog courses
+
 # Get detailed information for a specific course
 schedulo course carleton COMP1005 fall2025
 
@@ -233,6 +238,37 @@ schedulo professor Lucia Moura uottawa
 # Start the API server
 schedulo server --port 8000
 ```
+
+#### Catalog Courses Access
+Access complete course catalogs without needing term information:
+
+```bash
+# Get all catalog courses for a subject (university-specific formats)
+schedulo courses carleton COMP --catalog --limit 10        # Carleton: 4-letter codes
+schedulo courses uottawa CSI --catalog --limit 10          # UOttawa: 3-letter codes
+
+# Get all catalog courses (with limit for performance)
+schedulo courses carleton --catalog --limit 50             # First 50 courses
+schedulo courses uottawa --catalog --limit 0               # All courses (no limit)
+
+# Example output:
+# Getting catalog courses from carleton...
+# Found 10 catalog courses
+#
+# COMP - 10 courses:
+#   COMP1001: Introduction to Computational Thinking for Arts and Social Science Students
+#   COMP1005: Introduction to Computer Science I
+#   COMP1006: Introduction to Computer Science II
+#   COMP1405: Introduction to Computer Science I
+#     Credits: 3
+#   ...
+```
+
+**Key Features:**
+- **No term required**: Catalog data is term-independent
+- **Subject code validation**: Automatically detects valid subject codes based on university
+- **Organized output**: Courses grouped by subject with credit information
+- **Performance limits**: Built-in limits to handle large catalogs efficiently
 
 #### Enhanced Section Parsing
 The CLI now captures **complete section data** including all lectures, tutorials, and labs:
@@ -289,38 +325,159 @@ schedulo professor NonExistent Name uottawa
 # - Some professors may not be on Rate My Professor
 ```
 
-### REST API Usage
+### REST API Server
+
+The Schedulo API provides a comprehensive FastAPI-based REST server with interactive documentation, structured responses, and powerful filtering capabilities.
 
 #### Start Server
-```python
-from uoapi.interfaces.api import create_app
-import uvicorn
+```bash
+# Using CLI (Recommended)
+schedulo server --port 8000
 
+# Or programmatically
+python -c "
+from uoapi.server.app import create_app
+import uvicorn
 app = create_app()
-uvicorn.run(app, host="0.0.0.0", port=8000)
+uvicorn.run(app, host='127.0.0.1', port=8000)
+"
 ```
 
-#### API Endpoints
-```bash
-# Health check
-curl http://localhost:8000/health
+**Interactive Documentation**: http://localhost:8000/docs  
+**ReDoc Documentation**: http://localhost:8000/redoc
 
-# List universities
+#### Core Endpoints
+
+##### University Information
+```bash
+# List all supported universities
 curl http://localhost:8000/universities
 
-# University info
+# Get university-specific information
 curl http://localhost:8000/universities/carleton/info
+curl http://localhost:8000/universities/uottawa/info
+```
 
-# Get subjects
+##### Subjects
+```bash
+# Get subjects (preview - first 20)
+curl http://localhost:8000/universities/carleton/subjects
 curl http://localhost:8000/universities/uottawa/subjects
 
-# Search courses
-curl "http://localhost:8000/universities/uottawa/courses?subject=CSI&search=web&limit=10"
-
-# Live course data (both universities)
-curl "http://localhost:8000/universities/carleton/live-courses?term=winter&year=2025&subjects=COMP,MATH&limit=20&include_ratings=true"
-curl "http://localhost:8000/universities/uottawa/live-courses?term=fall&year=2025&subjects=CSI,CEG&limit=20"
+# Get all subjects (complete catalog)
+curl http://localhost:8000/universities/carleton/subjects/catalog
+curl http://localhost:8000/universities/uottawa/subjects/catalog
 ```
+
+##### Course Catalog (Static Data)
+```bash
+# Get catalog courses by subject
+curl "http://localhost:8000/universities/carleton/courses/catalog?subjects=COMP,MATH&limit=10"
+curl "http://localhost:8000/universities/uottawa/courses/catalog?subjects=CSI,MAT&limit=5"
+
+# Get all catalog courses (warning: large response)
+curl "http://localhost:8000/universities/carleton/courses/catalog"
+
+# Get single course (catalog data only)
+curl http://localhost:8000/universities/carleton/courses/COMP1005
+curl http://localhost:8000/universities/uottawa/courses/CSI3140
+```
+
+##### Live Timetable Data
+```bash
+# Get available terms for live data
+curl http://localhost:8000/universities/carleton/terms
+curl http://localhost:8000/universities/uottawa/terms
+
+# Multiple courses with live sections
+curl "http://localhost:8000/universities/carleton/courses/live?term=fall&year=2025&subjects=COMP,MATH&limit=20&include_ratings=true"
+curl "http://localhost:8000/universities/uottawa/courses/live?term=winter&year=2025&subjects=CSI,CEG&limit=10"
+
+# Filter by specific course codes
+curl "http://localhost:8000/universities/carleton/courses/live?term=fall&year=2025&subjects=COMP&course_codes=COMP1005,COMP1405"
+
+# Single course with structured sections
+curl "http://localhost:8000/universities/carleton/courses/COMP1005/live?term=fall&year=2025&include_ratings=true"
+```
+
+**New Single Course Response Structure**:
+```json
+{
+  "university": "carleton",
+  "term_code": "202530",
+  "term_name": "Fall 2025",
+  "course": {
+    "course_code": "COMP1005",
+    "subject_code": "COMP",
+    "title": "Programming Concepts",
+    "credits": 0.5,
+    "is_offered": true,
+    "sections_found": 13
+  },
+  "sections": [
+    {
+      "section": "A",
+      "components": [
+        {
+          "name": "A",
+          "crn": "31108",
+          "status": "Open",
+          "credits": 0.5,
+          "schedule_type": "Lecture",
+          "instructor": "Ava McKenney",
+          "meeting_times": [
+            {
+              "start_date": "Sep 03, 2025",
+              "end_date": "Dec 05, 2025", 
+              "days": "Wed Fri",
+              "start_time": "13:05",
+              "end_time": "14:25"
+            }
+          ],
+          "notes": ["Also Register in: COMP 1005 A1 or A2 or A3"],
+          "rmp_rating": {
+            "instructor": "Ava McKenney",
+            "rating": 4.2,
+            "num_ratings": 15
+          }
+        },
+        {
+          "name": "A1",
+          "crn": "31109",
+          "status": "Open",
+          "schedule_type": "Tutorial",
+          "instructor": "Ava McKenney"
+        },
+        {
+          "name": "A2", 
+          "crn": "31110",
+          "status": "Full, No Waitlist",
+          "schedule_type": "Tutorial"
+        }
+      ]
+    }
+  ]
+}
+```
+
+##### Professor Ratings
+```bash
+# Get Rate My Professor ratings
+curl "http://localhost:8000/universities/carleton/professors/John/Smith"
+curl "http://localhost:8000/universities/uottawa/professors/Lucia/Moura"
+```
+
+#### API Features
+
+- **🏗️ Structured Responses**: Properly grouped course sections and components
+- **⭐ Professor Integration**: Optional Rate My Professor ratings via `?include_ratings=true`
+- **🔍 Smart Filtering**: Filter by subjects, course codes, terms
+- **📊 University-Specific**: Handles different term formats and subject code lengths
+- **📚 Comprehensive Data**: Course catalogs, live timetables, prerequisites
+- **🚀 High Performance**: Direct single-course queries bypass bulk discovery
+- **📖 Interactive Docs**: Auto-generated OpenAPI documentation
+- **🛡️ Type Safety**: Full Pydantic validation and serialization
+- **🎯 RESTful Design**: Clean, predictable endpoint structure
 
 ## 🔧 Advanced Usage
 
@@ -556,7 +713,7 @@ print(config.to_dict())
 reload_config("development")
 ```
 
-## 🎯 What's New in v3.2
+## 🎯 What's New in v3.2+
 
 ### Major Enhancements
 - **🔧 Enhanced Section Parsing**: Complete retrieval of all course sections, lectures, tutorials, and labs
@@ -564,6 +721,8 @@ reload_config("development")
 - **⚡ Improved Data Accuracy**: Fixed Banner system parsing to capture all available course sections  
 - **🚀 Better User Experience**: Streamlined commands and comprehensive section information
 - **👨‍🏫 Professor Ratings**: New `schedulo professor` command with Rate My Professor integration
+- **📚 Catalog Access**: New `--catalog` option to browse complete course catalogs without term requirements
+- **🎯 Smart Subject Validation**: University-specific subject code validation (4-letter for Carleton, 3-letter for UOttawa)
 
 ### Architecture Improvements
 - **🏗️ Clean Architecture**: Proper layered design with separation of concerns

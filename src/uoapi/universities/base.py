@@ -167,3 +167,33 @@ class BaseUniversityProvider(UniversityProvider, ABC):
             is_offered=data.get("is_offered", True),
             last_updated=datetime.now(),
         )
+
+    def discover_single_course(
+        self, 
+        term_code: str, 
+        course_code: str
+    ) -> Optional[Course]:
+        """
+        Discover live data for a single specific course.
+        
+        This method should be implemented by providers that support
+        more efficient single-course queries. Base implementation
+        falls back to using discover_courses with filtering.
+        
+        Args:
+            term_code: Term identifier
+            course_code: Full course code
+            
+        Returns:
+            Course object with live sections if found, None otherwise
+        """
+        # Default implementation: use discover_courses as fallback
+        subject_code = self._extract_subject_code(course_code)
+        result = self.discover_courses(
+            term_code=term_code,
+            subjects=[subject_code],
+            course_codes=[course_code],
+            max_courses_per_subject=100
+        )
+        
+        return result.courses[0] if result.courses else None

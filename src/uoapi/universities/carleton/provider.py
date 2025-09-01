@@ -305,6 +305,65 @@ class CarletonProvider(BaseUniversityProvider):
             logger.error(f"Failed to discover courses: {e}")
             raise DataSourceError(f"Failed to discover courses from Carleton: {str(e)}")
 
+    def discover_single_course(
+        self, 
+        term_code: str, 
+        course_code: str
+    ) -> Optional[Course]:
+        """
+        Discover live data for a single specific course.
+        
+        This method directly queries Carleton Banner for a specific course
+        without going through the bulk discovery process.
+        
+        Args:
+            term_code: Term identifier (e.g., "202530")
+            course_code: Full course code (e.g., "COMP1005")
+            
+        Returns:
+            Course object with live sections if found, None otherwise
+        """
+        try:
+            # Extract subject and course number
+            subject_code = self._extract_subject_code(course_code)
+            course_number = self._extract_course_number(course_code)
+            
+            logger.info(f"Searching for single course: {course_code} ({subject_code} {course_number})")
+            
+            # Get available terms to validate session_id
+            available_terms = self._discovery.get_available_terms()
+            session_id = None
+            for code, name in available_terms:
+                if code == term_code:
+                    # For Carleton, session_id is typically the same as term_code
+                    session_id = code
+                    break
+            
+            if not session_id:
+                logger.error(f"Term {term_code} not found in available terms")
+                return None
+            
+            # Use the direct search_course method
+            old_course = self._discovery.search_course(
+                term_code=term_code,
+                session_id=session_id,
+                subject_code=subject_code,
+                course_number=course_number,
+                course_title="",  # Let Banner search by code
+                course_credits=0.0
+            )
+            
+            if old_course:
+                # Convert to new format
+                return self._convert_old_course_to_new(old_course)
+            
+            logger.info(f"Course {course_code} not found for term {term_code}")
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to discover single course {course_code}: {e}")
+            raise DataSourceError(f"Failed to discover course {course_code}: {str(e)}")
+
     def _convert_old_course_to_new(self, old_course: OldCourse) -> Course:
         """
         Convert old Carleton course format to new unified Course model.
