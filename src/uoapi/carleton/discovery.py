@@ -9,6 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 import logging
 import re
+import sys
 
 from .models import Course, CourseSection, MeetingTime
 
@@ -140,6 +141,7 @@ class CarletonDiscovery:
 
     def get_subjects_for_term(self, term_code):
         """Get available subjects for a specific term"""
+        print(f"[DEBUG] Fetching subjects for term {term_code}...", file=sys.stderr)
         session = self._create_session()
 
         try:
@@ -172,10 +174,17 @@ class CarletonDiscovery:
                     if subject_code and subject_code not in ["dummy", "%"]:
                         subjects.add(subject_code)
 
-            logger.info(f"Term {term_code}: {len(subjects)} subjects available")
+            print(
+                f"[DEBUG] Found {len(subjects)} subjects for term {term_code}.",
+                file=sys.stderr,
+            )
             return subjects, session_id
 
         except Exception as e:
+            print(
+                f"[ERROR] Failed to get subjects for term {term_code}: {e}",
+                file=sys.stderr,
+            )
             logger.error(f"Failed to get subjects for term {term_code}: {e}")
             return set(), ""
 
@@ -188,7 +197,10 @@ class CarletonDiscovery:
         course_title="",
         course_credits=0.0,
     ):
-        """Search for a single course and return detailed information"""
+        print(
+            f"[DEBUG]   > Searching course {subject_code} {course_number}...",
+            file=sys.stderr,
+        )
         session = self._create_session()
 
         # Rate limiting
@@ -257,6 +269,10 @@ class CarletonDiscovery:
 
             # Parse response
             if "No classes were found" in response.text:
+                print(
+                    f"[DEBUG]   > No classes found for {subject_code} {course_number}.",
+                    file=sys.stderr,
+                )
                 return Course(
                     course_code=f"{subject_code} {course_number}",
                     subject_code=subject_code,
@@ -500,6 +516,7 @@ class CarletonDiscovery:
 
             is_offered = len(sections_data) > 0
 
+            print(f"[DEBUG]   > Done {subject_code} {course_number}.", file=sys.stderr)
             return Course(
                 course_code=f"{subject_code} {course_number}",
                 subject_code=subject_code,
@@ -516,6 +533,10 @@ class CarletonDiscovery:
             )
 
         except Exception as e:
+            print(
+                f"[ERROR]   > Error searching {subject_code} {course_number}: {e}",
+                file=sys.stderr,
+            )
             logger.error(f"Error searching {subject_code} {course_number}: {e}")
             return Course(
                 course_code=f"{subject_code} {course_number}",
@@ -582,9 +603,14 @@ class CarletonDiscovery:
         if not course_args:
             return []
 
+        print(
+            f"[DEBUG] Starting course queries ({len(course_args)} to process)...",
+            file=sys.stderr,
+        )
+
         # Process courses (single-threaded for CLI simplicity)
         results = []
-        for args in course_args:
+        for idx, args in enumerate(course_args, 1):
             (
                 term_code,
                 session_id,
@@ -593,6 +619,10 @@ class CarletonDiscovery:
                 course_title,
                 course_credits,
             ) = args
+            print(
+                f"[DEBUG] [{idx}/{len(course_args)}] Querying {subject_code} {course_number}...",
+                file=sys.stderr,
+            )
             course = self.search_course(
                 term_code,
                 session_id,
@@ -601,6 +631,11 @@ class CarletonDiscovery:
                 course_title,
                 course_credits,
             )
+            print(
+                f"[DEBUG] [{idx}/{len(course_args)}] Finished {subject_code} {course_number}.",
+                file=sys.stderr,
+            )
             results.append(course)
 
+        print(f"[DEBUG] All course queries complete.", file=sys.stderr)
         return results

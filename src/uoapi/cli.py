@@ -4,7 +4,10 @@ Clean, unified CLI for Schedulo API.
 
 Usage:
   schedulo terms carleton                          # List available terms
-  schedulo courses uottawa fall2025 CSI           # List CSI courses
+  schedulo courses uottawa fall2025 CSI           # List CSI courses (3-letter)
+  schedulo courses carleton COMP --catalog        # List COMP catalog courses (4-letter)
+  schedulo courses uottawa CSI --catalog          # List CSI catalog courses (3-letter)
+  schedulo courses carleton --catalog              # List all catalog courses
   schedulo course carleton COMP1005 fall2025      # Get course details
   schedulo subjects uottawa                        # List subjects  
   schedulo professor John Smith carleton          # Get professor ratings
@@ -48,7 +51,7 @@ def parse_term(term_str: str) -> str:
     return term_mapping.get(term_str.lower(), term_str)
 
 
-def cmd_terms(args):
+def cmd_terms(args: argparse.Namespace):
     """List available terms."""
     provider = get_provider(args.university)
     print(f"Available terms at {args.university}:")
@@ -58,56 +61,122 @@ def cmd_terms(args):
         print(f"  {code}: {name}")
 
 
-def cmd_subjects(args):
+def cmd_subjects(args: argparse.Namespace):
     """List available subjects."""
     provider = get_provider(args.university)
-    print(f"Available subjects at {args.university}:")
-
     subjects = provider.get_subjects()
-    for subject in sorted(subjects, key=lambda s: s.code)[:20]:  # Show first 20
-        print(f"  {subject.code}: {subject.name}")
+    sorted_subjects = sorted(subjects, key=lambda s: s.code)
+    
+    if args.full:
+        # Show all subjects
+        print(f"All subjects at {args.university} ({len(subjects)} total):")
+        for subject in sorted_subjects:
+            print(f"  {subject.code}: {subject.name}")
+    else:
+        # Show first 20 subjects
+        print(f"Available subjects at {args.university} (showing first 20 of {len(subjects)}):")
+        for subject in sorted_subjects[:20]:
+            print(f"  {subject.code}: {subject.name}")
+        if len(subjects) > 20:
+            print(f"  ... and {len(subjects) - 20} more")
+            print(f"Use --full to see all {len(subjects)} subjects")
 
-    if len(subjects) > 20:
-        print(f"  ... and {len(subjects) - 20} more")
 
-
-def cmd_courses(args):
+def cmd_courses(args: argparse.Namespace):
     """List courses for subjects."""
     provider = get_provider(args.university)
-    term_code = parse_term(args.term)
     subjects = args.subjects if args.subjects else None
 
-    print(f"Discovering {args.university} courses for {args.term}...")
+    # Handle case where subjects are provided as term when using --catalog
+    if args.catalog and args.term and not subjects:
+        # Check if term looks like a subject code based on university
+        is_subject_code = False
+        if args.term.isupper() and not args.term[-1].isdigit():
+            if args.university.lower() in ["carleton", "cu"] and len(args.term) == 4:
+                is_subject_code = True
+            elif args.university.lower() in ["uottawa", "ottawa", "uo"] and len(args.term) == 3:
+                is_subject_code = True
+        
+        if is_subject_code:
+            subjects = [args.term]
+            args.term = None  # Clear term since we don't need it for catalog
 
-    result = provider.discover_courses(
-        term_code=term_code, subjects=subjects, max_courses_per_subject=args.limit
-    )
+    # Validate arguments
+    if not args.catalog and not args.term:
+        print("Error: term is required when not using --catalog")
+        return 1
 
-    print(f"Found {result.courses_offered}/{result.total_courses} offered courses")
+    if args.catalog:
+        # Show catalog courses (no live sections)
+        print(f"Getting catalog courses from {args.university}...")
+        
+        if subjects:
+            all_courses = []
+            for subject in subjects:
+                subject_courses = provider.get_courses(subject_code=subject.upper())
+                # Apply limit per subject if specified
+                if args.limit > 0:
+                    subject_courses = subject_courses[:args.limit]
+                all_courses.extend(subject_courses)
+        else:
+            # Get all courses if no subjects specified
+            all_courses = provider.get_courses()
+            if args.limit > 0:
+                all_courses = all_courses[:args.limit]
 
-    for course in result.courses:
-        print(f"\n{course.course_code}: {course.title}")
-        if course.sections:
-            lectures = len(
-                [s for s in course.sections if "lecture" in s.schedule_type.lower()]
-            )
-            tutorials = len(
-                [s for s in course.sections if "tutorial" in s.schedule_type.lower()]
-            )
-            labs = len([s for s in course.sections if "lab" in s.schedule_type.lower()])
+        print(f"Found {len(all_courses)} catalog courses")
 
-            parts = []
-            if lectures:
-                parts.append(f"{lectures} lectures")
-            if tutorials:
-                parts.append(f"{tutorials} tutorials")
-            if labs:
-                parts.append(f"{labs} labs")
+        # Group by subject for better display
+        courses_by_subject = {}
+        for course in all_courses:
+            subject = course.subject_code
+            if subject not in courses_by_subject:
+                courses_by_subject[subject] = []
+            courses_by_subject[subject].append(course)
 
-            print(f"  Sections: {len(course.sections)} ({', '.join(parts)})")
+        for subject in sorted(courses_by_subject.keys()):
+            subject_courses = courses_by_subject[subject]
+            print(f"\n{subject} - {len(subject_courses)} courses:")
+            for course in subject_courses:
+                print(f"  {course.course_code}: {course.title}")
+                if hasattr(course, 'credits') and course.credits:
+                    print(f"    Credits: {course.credits}")
+
+    else:
+        # Original live courses discovery
+        term_code = parse_term(args.term)
+        
+        print(f"Discovering {args.university} courses for {args.term}...")
+
+        result = provider.discover_courses(
+            term_code=term_code, subjects=subjects, max_courses_per_subject=args.limit
+        )
+
+        print(f"Found {result.courses_offered}/{result.total_courses} offered courses")
+
+        for course in result.courses:
+            print(f"\n{course.course_code}: {course.title}")
+            if course.sections:
+                lectures = len(
+                    [s for s in course.sections if "lecture" in s.schedule_type.lower()]
+                )
+                tutorials = len(
+                    [s for s in course.sections if "tutorial" in s.schedule_type.lower()]
+                )
+                labs = len([s for s in course.sections if "lab" in s.schedule_type.lower()])
+
+                parts = []
+                if lectures:
+                    parts.append(f"{lectures} lectures")
+                if tutorials:
+                    parts.append(f"{tutorials} tutorials")
+                if labs:
+                    parts.append(f"{labs} labs")
+
+                print(f"  Sections: {len(course.sections)} ({', '.join(parts)})")
 
 
-def cmd_course(args):
+def cmd_course(args: argparse.Namespace):
     """Get details for a specific course."""
     provider = get_provider(args.university)
     term_code = parse_term(args.term)
@@ -159,7 +228,7 @@ def cmd_course(args):
         print(f"Course {course_code} not found for {args.term}")
 
 
-def cmd_server(args):
+def cmd_server(args: argparse.Namespace):
     """Start the API server."""
     import uvicorn
     from uoapi.server.app import create_app
@@ -172,7 +241,7 @@ def cmd_server(args):
     uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="info")
 
 
-def cmd_professor(args):
+def cmd_professor(args: argparse.Namespace):
     """Get Rate My Professor ratings for an instructor."""
     from uoapi.rmp.rate_my_prof import get_professor_ratings
     
@@ -266,17 +335,23 @@ def main():
     # subjects
     subjects_parser = subparsers.add_parser("subjects", help="List available subjects")
     subjects_parser.add_argument("university", help="University (carleton, uottawa)")
+    subjects_parser.add_argument(
+        "--full", "-f", action="store_true", help="Show all subjects (default: first 20)"
+    )
     subjects_parser.set_defaults(func=cmd_subjects)
 
     # courses
     courses_parser = subparsers.add_parser("courses", help="List courses for subjects")
     courses_parser.add_argument("university", help="University (carleton, uottawa)")
-    courses_parser.add_argument("term", help="Term (fall2025, winter2025, 202530)")
+    courses_parser.add_argument("term", nargs="?", help="Term (fall2025, winter2025, 202530) - not needed with --catalog")
     courses_parser.add_argument(
         "subjects", nargs="*", help="Subject codes (COMP, MATH, CSI)"
     )
     courses_parser.add_argument(
         "--limit", "-l", type=int, default=10, help="Max courses per subject"
+    )
+    courses_parser.add_argument(
+        "--catalog", "-c", action="store_true", help="Show catalog courses (no live sections)"
     )
     courses_parser.set_defaults(func=cmd_courses)
 
