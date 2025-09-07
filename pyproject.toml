@@ -77,8 +77,7 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.dynamic]
-version = {attr = "uoapi.__version__.__version__"}
+[tool.setuptools_scm]
 
 [tool.setuptools.package-data]
 "*" = ["*.txt", "*.md"]
