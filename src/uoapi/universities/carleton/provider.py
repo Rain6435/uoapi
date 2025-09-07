@@ -33,6 +33,9 @@ from uoapi.carleton.models import (
     MeetingTime as OldMeetingTime,
 )
 
+# Import programs functionality
+from .programs import CarletonProgramsProvider
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,6 +54,9 @@ class CarletonProvider(BaseUniversityProvider):
         )
         self._catalog_data = None
         self._subjects_from_catalog = None
+        
+        # Initialize programs provider
+        self._programs_provider = CarletonProgramsProvider()
 
     @property
     def university(self) -> University:

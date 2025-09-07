@@ -375,6 +375,23 @@ def main():
 
     # server
     server_parser = subparsers.add_parser("server", help="Start API server")
+
+    # programs
+    programs_parser = subparsers.add_parser("programs", help="List available academic programs")
+    programs_parser.add_argument("university", help="University (carleton, uottawa)")
+    programs_parser.add_argument("--level", choices=["undergraduate", "graduate", "dual_level"], help="Filter by program level")
+    programs_parser.add_argument("--degree-type", help="Filter by degree type")
+    programs_parser.add_argument("--faculty", help="Filter by faculty")
+    programs_parser.add_argument("--discipline", help="Filter by discipline")
+    programs_parser.add_argument("--limit", "-l", type=int, default=50, help="Maximum programs to show")
+    programs_parser.set_defaults(func=cmd_programs)
+
+
+    # program
+    program_parser = subparsers.add_parser("program", help="Get details for a specific program")
+    program_parser.add_argument("university", help="University (carleton, uottawa)")
+    program_parser.add_argument("program_name", help="Name of the program")
+    program_parser.set_defaults(func=cmd_program)
     server_parser.add_argument(
         "--port", "-p", type=int, default=8000, help="Port (default: 8000)"
     )

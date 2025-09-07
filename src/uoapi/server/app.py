@@ -3,6 +3,7 @@ FastAPI application for serving course data.
 """
 
 from typing import Dict, List, Any, Optional
+from datetime import datetime
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -11,6 +12,7 @@ from uoapi.core import University
 from uoapi.universities.carleton.provider import CarletonProvider
 from uoapi.universities.uottawa.provider import UOttawaProvider
 from uoapi.services import DefaultCourseService, DefaultTimetableService
+from uoapi.universities.uottawa.programs import Program, ProgramType, ProgramDegreeType, Faculty, Discipline
 
 
 # Initialize providers
@@ -208,6 +210,73 @@ class SubjectsResponse(BaseModel):
     university: str
     subjects: List[str]
     total_subjects: int
+
+
+class ProgramResponse(BaseModel):
+    name: str
+    university: str
+    level: str
+    degree_type: str
+    faculty: Optional[str] = None
+    discipline: Optional[str] = None
+    code: Optional[str] = None
+    url: Optional[str] = None
+    description: Optional[str] = None
+    credits_required: Optional[float] = None
+    duration_years: Optional[float] = None
+    is_offered: bool = True
+
+
+class ProgramsResponse(BaseModel):
+    university: str
+    total_programs: int
+    programs_shown: int
+    programs: List[ProgramResponse]
+
+
+class ProgramFiltersResponse(BaseModel):
+    university: str
+    faculties: List[str]
+    disciplines: List[str]
+    program_types: List[str]
+    degree_types: List[str]
+
+
+class BulkUniversityData(BaseModel):
+    """University data for bulk export."""
+    id: int
+    name: str
+    code: str
+    country: str = "Canada"
+    province: str
+
+
+class BulkFacultyData(BaseModel):
+    """Faculty data for bulk export."""
+    id: int
+    university_id: int
+    name: str
+    code: str
+    description: Optional[str] = None
+
+
+class BulkProgramData(BaseModel):
+    """Program data for bulk export."""
+    id: int
+    faculty_id: int
+    name: str
+    code: str
+    coop_required: bool = False
+    degree_type: str
+    description: Optional[str] = None
+
+
+class BulkExportResponse(BaseModel):
+    """Complete bulk export response matching Laravel schema."""
+    universities: List[BulkUniversityData]
+    faculties: List[BulkFacultyData]
+    programs: List[BulkProgramData]
+    metadata: Dict[str, Any]
 
 
 class HealthResponse(BaseModel):
@@ -1019,6 +1088,368 @@ def create_app() -> FastAPI:
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to get live courses: {str(e)}"
+            )
+
+    @app.get("/universities/{university}/programs", response_model=ProgramsResponse)
+    async def get_programs(
+        university: str,
+        level: Optional[str] = Query(None, description="Filter by program level (undergraduate, graduate, dual_level)"),
+        degree_type: Optional[str] = Query(None, description="Filter by degree type (bachelor, master, doctorate, etc.)"),
+        faculty: Optional[str] = Query(None, description="Filter by faculty (arts, engineering, science, etc.)"),
+        discipline: Optional[str] = Query(None, description="Filter by discipline (computer_science, psychology, etc.)"),
+        limit: int = Query(50, description="Maximum number of programs to return", ge=1, le=500),
+    ):
+        """Get programs for a university with optional filtering."""
+        target_uni = normalize_university(university)
+
+        if target_uni not in get_available_universities():
+            raise HTTPException(
+                status_code=404,
+                detail=f"University '{university}' not found. Available: {get_available_universities()}",
+            )
+
+        # Check if university supports programs
+        if target_uni not in ["uottawa", "carleton"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Programs data is currently only available for University of Ottawa and Carleton University",
+            )
+
+        try:
+            provider = get_provider(target_uni)
+            programs_provider = provider._programs_provider  # Access the programs provider
+
+            # Convert string parameters to enum values if provided
+            level_enum = None
+            if level:
+                try:
+                    level_enum = ProgramType(level.lower())
+                except ValueError:
+                    valid_levels = [pt.value for pt in ProgramType]
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Invalid level '{level}'. Valid options: {valid_levels}"
+                    )
+
+            degree_type_enum = None
+            if degree_type:
+                try:
+                    degree_type_enum = ProgramDegreeType(degree_type.lower())
+                except ValueError:
+                    valid_types = [dt.value for dt in ProgramDegreeType]
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Invalid degree_type '{degree_type}'. Valid options: {valid_types}"
+                    )
+
+            faculty_enum = None
+            if faculty:
+                try:
+                    faculty_enum = Faculty(faculty.lower())
+                except ValueError:
+                    valid_faculties = [f.value for f in Faculty]
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Invalid faculty '{faculty}'. Valid options: {valid_faculties}"
+                    )
+
+            discipline_enum = None
+            if discipline:
+                try:
+                    discipline_enum = Discipline(discipline.lower())
+                except ValueError:
+                    valid_disciplines = [d.value for d in Discipline]
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Invalid discipline '{discipline}'. Valid options: {valid_disciplines}"
+                    )
+
+            # Get filtered programs
+            programs = programs_provider.get_programs_by_filters(
+                level=level_enum,
+                degree_type=degree_type_enum,
+                faculty=faculty_enum,
+                discipline=discipline_enum,
+            )
+
+            # Apply limit
+            limited_programs = programs[:limit]
+
+            # Convert to response model
+            program_responses = []
+            for program in limited_programs:
+                program_responses.append(ProgramResponse(
+                    name=program.name,
+                    university=program.university.value,
+                    level=program.level.value,
+                    degree_type=program.degree_type.value,
+                    faculty=program.faculty.value if program.faculty else None,
+                    discipline=program.discipline.value if program.discipline else None,
+                    code=program.code,
+                    url=program.url,
+                    description=program.description,
+                    credits_required=program.credits_required,
+                    duration_years=program.duration_years,
+                    is_offered=program.is_offered,
+                ))
+
+            return ProgramsResponse(
+                university=target_uni,
+                total_programs=len(programs),
+                programs_shown=len(limited_programs),
+                programs=program_responses,
+            )
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get programs: {str(e)}"
+            )
+
+    @app.get("/universities/{university}/programs/filters", response_model=ProgramFiltersResponse)
+    async def get_program_filters(university: str):
+        """Get available filter options for programs."""
+        target_uni = normalize_university(university)
+
+        if target_uni not in get_available_universities():
+            raise HTTPException(
+                status_code=404,
+                detail=f"University '{university}' not found. Available: {get_available_universities()}",
+            )
+
+        # Check if university supports programs
+        if target_uni not in ["uottawa", "carleton"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Programs data is currently only available for University of Ottawa and Carleton University",
+            )
+
+        try:
+            provider = get_provider(target_uni)
+            programs_provider = provider._programs_provider
+
+            # Get unique values from programs data
+            unique_faculties = programs_provider.get_unique_faculties()
+            unique_disciplines = programs_provider.get_unique_disciplines()
+
+            return ProgramFiltersResponse(
+                university=target_uni,
+                faculties=[f.value for f in unique_faculties],
+                disciplines=[d.value for d in unique_disciplines],
+                program_types=[pt.value for pt in ProgramType],
+                degree_types=[dt.value for dt in ProgramDegreeType],
+            )
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get program filters: {str(e)}"
+            )
+
+    @app.get("/universities/{university}/programs/search")
+    async def search_programs(
+        university: str,
+        q: str = Query(..., description="Search query for program name"),
+        limit: int = Query(20, description="Maximum number of programs to return", ge=1, le=100),
+    ):
+        """Search programs by name."""
+        target_uni = normalize_university(university)
+
+        if target_uni not in get_available_universities():
+            raise HTTPException(
+                status_code=404,
+                detail=f"University '{university}' not found. Available: {get_available_universities()}",
+            )
+
+        # Check if university supports programs
+        if target_uni not in ["uottawa", "carleton"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Programs data is currently only available for University of Ottawa and Carleton University",
+            )
+
+        try:
+            provider = get_provider(target_uni)
+            programs_provider = provider._programs_provider
+
+            # Get all programs and filter by search query
+            all_programs = programs_provider.get_programs()
+            query_lower = q.lower()
+            
+            matching_programs = []
+            for program in all_programs:
+                if query_lower in program.name.lower():
+                    matching_programs.append(program)
+                    if len(matching_programs) >= limit:
+                        break
+
+            # Convert to response model
+            program_responses = []
+            for program in matching_programs:
+                program_responses.append(ProgramResponse(
+                    name=program.name,
+                    university=program.university.value,
+                    level=program.level.value,
+                    degree_type=program.degree_type.value,
+                    faculty=program.faculty.value if program.faculty else None,
+                    discipline=program.discipline.value if program.discipline else None,
+                    code=program.code,
+                    url=program.url,
+                    description=program.description,
+                    credits_required=program.credits_required,
+                    duration_years=program.duration_years,
+                    is_offered=program.is_offered,
+                ))
+
+            return {
+                "university": target_uni,
+                "query": q,
+                "total_matches": len(matching_programs),
+                "programs_shown": len(program_responses),
+                "programs": program_responses,
+            }
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to search programs: {str(e)}"
+            )
+
+    @app.get("/universities/{university}/programs/export", response_model=BulkExportResponse)
+    async def export_all_programs(university: str):
+        """Export all programs for a university in bulk format for external applications."""
+        target_uni = normalize_university(university)
+
+        if target_uni not in get_available_universities():
+            raise HTTPException(
+                status_code=404,
+                detail=f"University '{university}' not found. Available: {get_available_universities()}",
+            )
+
+        # Check if university supports programs
+        if target_uni not in ["uottawa", "carleton"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Programs data is currently only available for University of Ottawa and Carleton University",
+            )
+
+        try:
+            provider = get_provider(target_uni)
+            programs_provider = provider._programs_provider
+
+            # Get all programs
+            all_programs = programs_provider.get_programs()
+
+            # Map university data
+            if target_uni == "uottawa":
+                university_data = BulkUniversityData(
+                    id=1,
+                    name="University of Ottawa",
+                    code="uottawa",
+                    country="Canada",
+                    province="Ontario"
+                )
+            else:  # carleton
+                university_data = BulkUniversityData(
+                    id=2,
+                    name="Carleton University", 
+                    code="carleton",
+                    country="Canada",
+                    province="Ontario"
+                )
+
+            # Create faculty mapping and assign IDs
+            faculty_map = {}  # faculty_enum -> faculty_id
+            faculties_data = []
+            faculty_id_counter = 1
+
+            # Get unique faculties from programs
+            unique_faculties = programs_provider.get_unique_faculties()
+            
+            for faculty_enum in unique_faculties:
+                faculty_data = BulkFacultyData(
+                    id=faculty_id_counter,
+                    university_id=university_data.id,  # Use the correct university ID
+                    name=faculty_enum.value.replace("_", " ").title(),
+                    code=faculty_enum.value.upper(),
+                    description=f"Faculty of {faculty_enum.value.replace('_', ' ').title()}"
+                )
+                faculties_data.append(faculty_data)
+                faculty_map[faculty_enum] = faculty_id_counter
+                faculty_id_counter += 1
+
+            # Create programs data
+            programs_data = []
+            program_id_counter = 1
+
+            for program in all_programs:
+                # Determine faculty_id
+                faculty_id = 1  # Default fallback
+                if program.faculty and program.faculty in faculty_map:
+                    faculty_id = faculty_map[program.faculty]
+
+                # Detect co-op requirement from program name
+                coop_required = any(keyword in program.name.lower() for keyword in ['co-op', 'coop', 'cooperative'])
+
+                # Map degree type to Laravel format
+                degree_type_mapping = {
+                    'bachelor': 'Bachelor',
+                    'master': 'Master',
+                    'doctorate': 'Doctorate',
+                    'certificate': 'Certificate',
+                    'graduate_diploma': 'Graduate Diploma',
+                    'juris_doctor': 'Juris Doctor',
+                    'licentiate': 'Licentiate',
+                    'major': 'Major',
+                    'microprogram': 'Microprogram',
+                    'minor': 'Minor',
+                    'dual_degree': 'Dual Degree',
+                    'online': 'Online',
+                    'option': 'Option'
+                }
+                
+                degree_type_display = degree_type_mapping.get(
+                    program.degree_type.value.lower(),
+                    program.degree_type.value.replace('_', ' ').title()
+                )
+
+                program_data = BulkProgramData(
+                    id=program_id_counter,
+                    faculty_id=faculty_id,
+                    name=program.name,
+                    code=program.code if program.code else f"PROG{program_id_counter:04d}",
+                    coop_required=coop_required,
+                    degree_type=degree_type_display,
+                    description=program.description
+                )
+                programs_data.append(program_data)
+                program_id_counter += 1
+
+            # Prepare metadata
+            metadata = {
+                "export_timestamp": datetime.now().isoformat(),
+                "total_universities": 1,
+                "total_faculties": len(faculties_data),
+                "total_programs": len(programs_data),
+                "source_university": target_uni,
+                "data_version": "1.0",
+                "notes": [
+                    "This export is designed for Laravel application import",
+                    "IDs are generated for relational consistency",
+                    "Co-op requirement detected from program names",
+                    "Faculty assignments based on program metadata"
+                ]
+            }
+
+            return BulkExportResponse(
+                universities=[university_data],
+                faculties=faculties_data,
+                programs=programs_data,
+                metadata=metadata
+            )
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to export programs: {str(e)}"
             )
 
     @app.exception_handler(404)

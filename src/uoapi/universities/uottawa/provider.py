@@ -31,6 +31,9 @@ from uoapi.course.models import Subject as OldSubject, Course as OldCourse
 # Import for catalog data loading
 from uoapi.discovery.discovery_service import get_courses_data
 
+# Import programs functionality
+from .programs import UOttawaProgramsProvider
+
 # Import timetable functionality for live data
 from uoapi.timetable.query_timetable import (
     TimetableQuery,
@@ -53,6 +56,9 @@ class UOttawaProvider(BaseUniversityProvider):
         super().__init__()
         self._base_url = "https://catalogue.uottawa.ca/en/courses/"
         self._timetable_query = None
+        
+        # Initialize programs provider
+        self._programs_provider = UOttawaProgramsProvider()
 
     @property
     def university(self) -> University:

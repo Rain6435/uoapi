@@ -11,9 +11,11 @@ A Python CLI tool and library for retrieving public data from Canadian universit
 
 - **🏫 Multi-University Support**: University of Ottawa and Carleton University
 - **📚 Complete Course Data**: Catalogs, timetables, prerequisites, components
+- **🎓 Academic Programs**: 840+ programs with filtering, search, and bulk export
 - **⚡ Live Timetable Data**: Real-time course availability and scheduling
 - **⭐ Rate My Professor Integration**: Professor ratings for both universities
 - **🚀 FastAPI REST API**: Complete HTTP API with interactive documentation
+- **📦 Laravel Integration**: Bulk program export for database seeding
 - **🔧 Clean Architecture**: Layered design with proper separation of concerns
 - **🐍 Python Library**: Comprehensive programmatic access
 - **📝 Type Safety**: Full type annotations with Pydantic models
@@ -467,13 +469,49 @@ curl "http://localhost:8000/universities/carleton/professors/John/Smith"
 curl "http://localhost:8000/universities/uottawa/professors/Lucia/Moura"
 ```
 
+##### 🎓 Academic Programs
+```bash
+# Get all programs for a university
+curl "http://localhost:8000/universities/carleton/programs?limit=10"
+curl "http://localhost:8000/universities/uottawa/programs?limit=10"
+
+# Filter programs by criteria
+curl "http://localhost:8000/universities/carleton/programs?faculty=engineering&limit=5"
+curl "http://localhost:8000/universities/uottawa/programs?degree_type=bachelor&faculty=science"
+
+# Search programs by name
+curl "http://localhost:8000/universities/carleton/programs/search?q=computer&limit=5"
+curl "http://localhost:8000/universities/uottawa/programs/search?q=engineering&limit=5"
+
+# Get available filter options
+curl "http://localhost:8000/universities/carleton/programs/filters"
+curl "http://localhost:8000/universities/uottawa/programs/filters"
+
+# 🚀 BULK EXPORT - All programs for Laravel/database import
+curl "http://localhost:8000/universities/carleton/programs/export"
+curl "http://localhost:8000/universities/uottawa/programs/export"
+```
+
+**Programs Data Coverage:**
+- **🎓 Carleton University**: 129 programs across 5 faculties
+- **🎓 University of Ottawa**: 700+ programs across 9 faculties
+- **📊 Total**: 840+ academic programs available
+
+**Bulk Export Features:**
+- 📦 **One-shot export**: Complete university + faculty + program data
+- 🏛️ **Laravel-compatible**: Ready for direct database import
+- 🔗 **Relational structure**: Proper university → faculty → program hierarchy
+- 📋 **Rich metadata**: Export timestamps, counts, and import notes
+
 #### API Features
 
 - **🏗️ Structured Responses**: Properly grouped course sections and components
+- **🎓 Academic Programs**: Complete program catalog with search and filtering
+- **📦 Bulk Export**: Laravel-ready program data with relational structure
 - **⭐ Professor Integration**: Optional Rate My Professor ratings via `?include_ratings=true`
-- **🔍 Smart Filtering**: Filter by subjects, course codes, terms
+- **🔍 Smart Filtering**: Filter by subjects, course codes, terms, faculties, disciplines
 - **📊 University-Specific**: Handles different term formats and subject code lengths
-- **📚 Comprehensive Data**: Course catalogs, live timetables, prerequisites
+- **📚 Comprehensive Data**: Course catalogs, live timetables, prerequisites, programs
 - **🚀 High Performance**: Direct single-course queries bypass bulk discovery
 - **📖 Interactive Docs**: Auto-generated OpenAPI documentation
 - **🛡️ Type Safety**: Full Pydantic validation and serialization
