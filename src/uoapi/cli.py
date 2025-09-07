@@ -144,6 +144,10 @@ def cmd_courses(args: argparse.Namespace):
 
     else:
         # Original live courses discovery
+        if args.term is None:
+            print("Error: term is required when not using --catalog")
+            return 1
+            
         term_code = parse_term(args.term)
         
         print(f"Discovering {args.university} courses for {args.term}...")
@@ -384,14 +388,13 @@ def main():
     programs_parser.add_argument("--faculty", help="Filter by faculty")
     programs_parser.add_argument("--discipline", help="Filter by discipline")
     programs_parser.add_argument("--limit", "-l", type=int, default=50, help="Maximum programs to show")
-    programs_parser.set_defaults(func=cmd_programs)
 
 
     # program
     program_parser = subparsers.add_parser("program", help="Get details for a specific program")
     program_parser.add_argument("university", help="University (carleton, uottawa)")
     program_parser.add_argument("program_name", help="Name of the program")
-    program_parser.set_defaults(func=cmd_program)
+
     server_parser.add_argument(
         "--port", "-p", type=int, default=8000, help="Port (default: 8000)"
     )
