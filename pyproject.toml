@@ -41,7 +41,7 @@ dependencies = [
     "lxml",
     "pandas",
     "parsedatetime",
-    "pydantic<2",
+    "pydantic",
     "fastapi",
     "uvicorn[standard]",
 ]

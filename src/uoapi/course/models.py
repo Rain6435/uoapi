@@ -48,6 +48,7 @@ class Course(BaseModel):
     description: str = Field(..., description="Course description")
     components: List[str] = Field(default_factory=list, description="Course components")
     prerequisites: str = Field(default="", description="Prerequisites text")
+    raw_prerequisites: str = Field(default="", description="Raw prerequisites text from website")
     dependencies: List[List[str]] = Field(
         default_factory=list, description="Parsed dependencies"
     )

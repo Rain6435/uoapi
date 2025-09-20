@@ -34,7 +34,9 @@ def scrape_subjects(url: str = course_url):
     Returns:
         A list of Subject objects converted to dictionaries
     """
-    page = requests.get(url, timeout=30).text
+    response = requests.get(url, timeout=30)
+    response.encoding = 'utf-8'  # Ensure proper UTF-8 encoding
+    page = response.text
     soup = BeautifulSoup(page, "html.parser")
 
     match content := soup.find("div", attrs={"class": "az_sitemap"}):
@@ -110,6 +112,7 @@ def get_course_from_tag(tag: Tag):
         dependencies=dependencies,
         components=utils.split_component_parts(components),
         prerequisites=prerequisites,
+        raw_prerequisites=prereq_string,  # Include raw prerequisite string
     )
 
 
@@ -118,8 +121,10 @@ def get_courses(link: str):
     Scrapes the page given by link for courses and their descriptions, components,
     prerequisites, etc.
     """
+    response = requests.get(link, timeout=30)
+    response.encoding = 'utf-8'  # Ensure proper UTF-8 encoding
     raw_courses = BeautifulSoup(
-        requests.get(link, timeout=30).text,
+        response.text,
         "html.parser",
     )
     course_tags = utils.get_taglist_from_resultset(
@@ -130,4 +135,4 @@ def get_courses(link: str):
     )
 
     for course_tag in course_tags:
-        yield get_course_from_tag(course_tag).dict()
+        yield get_course_from_tag(course_tag).model_dump()
