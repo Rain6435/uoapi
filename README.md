@@ -1,8 +1,8 @@
 # Schedulo API
 
-A Python CLI tool and library for retrieving public data from Canadian universities, including the University of Ottawa and Carleton University.
+A REST API server for retrieving public data from Canadian universities, including the University of Ottawa and Carleton University.
 
-**This package now features a completely refactored, clean architecture with improved maintainability and extensibility.**
+**This package features a completely refactored, clean architecture with improved maintainability and extensibility.**
 
 [![PyPI version](https://badge.fury.io/py/schedulo-api.svg)](https://badge.fury.io/py/schedulo-api)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -17,9 +17,8 @@ A Python CLI tool and library for retrieving public data from Canadian universit
 - **🚀 FastAPI REST API**: Complete HTTP API with interactive documentation
 - **📦 Laravel Integration**: Bulk program export for database seeding
 - **🔧 Clean Architecture**: Layered design with proper separation of concerns
-- **🐍 Python Library**: Comprehensive programmatic access
+- **🐍 Python Library**: Programmatic access to services for building your own applications
 - **📝 Type Safety**: Full type annotations with Pydantic models
-- **🔄 Backward Compatibility**: Existing code continues to work
 
 ## 🏗️ New Architecture
 
@@ -28,9 +27,9 @@ The package has been completely refactored with a clean layered architecture:
 ```
 uoapi/
 ├── core/                    # Domain models & interfaces
-├── universities/           # University-specific implementations  
+├── universities/           # University-specific implementations
 ├── services/              # Business logic layer
-├── interfaces/            # CLI and API interfaces
+├── server/                # REST API server
 └── utils/                # Shared utilities
 ```
 
@@ -60,7 +59,33 @@ pip install -e .[tests]
 
 ### Basic Usage
 
-#### New Service-Based API (Recommended)
+#### Starting the Server
+```bash
+# Start the REST API server
+schedulo-server --port 8000
+
+# With custom options
+schedulo-server --host 0.0.0.0 --port 8080 --workers 4
+
+# Development mode with auto-reload
+schedulo-server --reload --log-level debug
+
+# Interactive docs available at:
+# http://localhost:8000/docs
+# http://localhost:8000/redoc
+```
+
+#### Programmatic Usage
+```python
+# Start server programmatically
+from uoapi.server.app import create_app
+import uvicorn
+
+app = create_app()
+uvicorn.run(app, host="127.0.0.1", port=8000)
+```
+
+#### Using the Python Library
 ```python
 from uoapi.core import University
 from uoapi.services import DefaultCourseService, DefaultTimetableService
@@ -81,7 +106,7 @@ print(f"Found {len(courses)} COMP courses")
 search_result = course_service.search_courses(University.UOTTAWA, "programming")
 print(f"Found {search_result.total_found} courses matching 'programming'")
 
-# Get live timetable data (Carleton only)
+# Get live timetable data
 if University.CARLETON in timetable_service.get_supported_universities():
     live_data = timetable_service.get_live_courses(
         University.CARLETON,
@@ -90,34 +115,6 @@ if University.CARLETON in timetable_service.get_supported_universities():
         max_courses_per_subject=10
     )
     print(f"Found {live_data.courses_offered} offered courses")
-```
-
-#### Command Line Interface
-```bash
-# List available terms
-schedulo terms carleton
-
-# List available subjects
-schedulo subjects carleton
-
-# Get courses for subjects
-schedulo courses carleton fall2025 COMP MATH
-
-# Get specific course details
-schedulo course carleton COMP1005 fall2025
-
-# Start FastAPI server
-schedulo server --port 8000
-```
-
-#### FastAPI Server
-```bash
-# Start the server
-schedulo server --port 8000
-
-# Interactive docs available at:
-# http://localhost:8000/docs
-# http://localhost:8000/redoc
 ```
 
 ## 📖 Complete Usage Guide
@@ -210,131 +207,21 @@ ratings = service.get_batch_ratings(instructors, University.CARLETON)
 enhanced_courses = service.inject_ratings_into_courses(courses, University.UOTTAWA)
 ```
 
-### CLI Usage
-
-The clean, unified CLI provides simple commands for accessing university data:
-
-#### Basic Commands
-```bash
-# List available terms
-schedulo terms carleton
-
-# List available subjects
-schedulo subjects carleton
-
-# Get courses for specific subjects and term
-schedulo courses carleton fall2025 COMP MATH --limit 20
-
-# Get catalog courses (no term required, no live sections)
-schedulo courses carleton COMP --catalog --limit 10        # Carleton: 4-letter subjects
-schedulo courses uottawa CSI --catalog --limit 10          # UOttawa: 3-letter subjects  
-schedulo courses carleton --catalog --limit 20             # All catalog courses
-
-# Get detailed information for a specific course
-schedulo course carleton COMP1005 fall2025
-
-# Get professor ratings from Rate My Professor
-schedulo professor John Smith carleton
-schedulo professor Lucia Moura uottawa
-
-# Start the API server
-schedulo server --port 8000
-```
-
-#### Catalog Courses Access
-Access complete course catalogs without needing term information:
-
-```bash
-# Get all catalog courses for a subject (university-specific formats)
-schedulo courses carleton COMP --catalog --limit 10        # Carleton: 4-letter codes
-schedulo courses uottawa CSI --catalog --limit 10          # UOttawa: 3-letter codes
-
-# Get all catalog courses (with limit for performance)
-schedulo courses carleton --catalog --limit 50             # First 50 courses
-schedulo courses uottawa --catalog --limit 0               # All courses (no limit)
-
-# Example output:
-# Getting catalog courses from carleton...
-# Found 10 catalog courses
-#
-# COMP - 10 courses:
-#   COMP1001: Introduction to Computational Thinking for Arts and Social Science Students
-#   COMP1005: Introduction to Computer Science I
-#   COMP1006: Introduction to Computer Science II
-#   COMP1405: Introduction to Computer Science I
-#     Credits: 3
-#   ...
-```
-
-**Key Features:**
-- **No term required**: Catalog data is term-independent
-- **Subject code validation**: Automatically detects valid subject codes based on university
-- **Organized output**: Courses grouped by subject with credit information
-- **Performance limits**: Built-in limits to handle large catalogs efficiently
-
-#### Enhanced Section Parsing
-The CLI now captures **complete section data** including all lectures, tutorials, and labs:
-
-```bash
-# Example: COMP 1005 retrieves all 13 sections (4 lectures + 9 tutorials)
-schedulo course carleton COMP1005 fall2025
-
-# Output shows:
-#   Sections Summary:
-#     Total: 13
-#     Lectures: 4  
-#     Tutorials: 9
-#   
-#   All Sections:
-#     A (Lecture) - CRN 10001 - Open
-#     B (Lecture) - CRN 10002 - Open
-#     T01 (Tutorial) - CRN 10101 - Open
-#     T02 (Tutorial) - CRN 10102 - Wait List
-#     ...
-```
-
-#### Professor Rating Lookup
-Get comprehensive Rate My Professor data for university instructors:
-
-```bash
-# Basic professor lookup
-schedulo professor Rami Abielmona uottawa
-
-# Output example:
-# 📊 Professor Rating: Rami Abielmona
-# ==================================================
-# Overall Rating: 4.5/5.0 ⭐
-# Number of Ratings: 57
-# Department: Engineering
-# Would Take Again: 85%
-# Average Difficulty: 3.3/5.0
-# Rate My Professor ID: 232123
-# Profile URL: https://www.ratemyprofessors.com/professor/232123
-#
-# 📝 Rating Interpretation:
-# 🟢 Excellent professor (4.0+ rating)
-
-# Works with both universities
-schedulo professor Bo Sun uottawa      # University of Ottawa
-schedulo professor John Smith carleton # Carleton University
-
-# Handles various name formats and provides helpful error messages
-schedulo professor NonExistent Name uottawa
-# No ratings found for NonExistent Name at University of Ottawa
-# Tips:
-# - Try different name variations (nicknames, middle names)  
-# - Check spelling of first and last name
-# - Some professors may not be on Rate My Professor
-```
 
 ### REST API Server
 
 The Schedulo API provides a comprehensive FastAPI-based REST server with interactive documentation, structured responses, and powerful filtering capabilities.
 
-#### Start Server
+#### Starting the Server
 ```bash
-# Using CLI (Recommended)
-schedulo server --port 8000
+# Start the server (Recommended)
+schedulo-server --port 8000
+
+# With additional options
+schedulo-server --host 0.0.0.0 --port 8080 --workers 4
+
+# Development mode
+schedulo-server --reload --log-level debug
 
 # Or programmatically
 python -c "
@@ -345,7 +232,7 @@ uvicorn.run(app, host='127.0.0.1', port=8000)
 "
 ```
 
-**Interactive Documentation**: http://localhost:8000/docs  
+**Interactive Documentation**: http://localhost:8000/docs
 **ReDoc Documentation**: http://localhost:8000/redoc
 
 #### Core Endpoints
@@ -547,34 +434,21 @@ service = DefaultCourseService()
 service._providers[University.MYUNI] = MyUniversityProvider()
 ```
 
-### Custom CLI Command
+### Custom API Endpoints
 ```python
-from uoapi.interfaces.cli.framework import UniversityCommand, registry
-import argparse
+from fastapi import APIRouter
+from uoapi.server.app import create_app
 
-class MyCommand(UniversityCommand):
-    @property
-    def name(self) -> str:
-        return "mycmd"
-    
-    @property
-    def help(self) -> str:
-        return "My custom command"
-    
-    @property
-    def description(self) -> str:
-        return "Does something useful"
-    
-    def configure_command_parser(self, parser: argparse.ArgumentParser):
-        parser.add_argument("--option", help="My option")
-        return parser
-    
-    def execute_for_university(self, args, university):
-        # Implement command logic
-        return self.format_output({"result": "success"})
+# Create custom router
+custom_router = APIRouter()
 
-# Register command
-registry.register(MyCommand())
+@custom_router.get("/custom/endpoint")
+async def custom_endpoint():
+    return {"message": "Custom functionality"}
+
+# Add to app
+app = create_app()
+app.include_router(custom_router, prefix="/api/v1", tags=["custom"])
 ```
 
 ### Configuration
@@ -735,8 +609,8 @@ from uoapi.interfaces.api import create_app  # ✅ Clean API
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Or via CLI
-uoapi --verbose course -u carleton -c COMP
+# Or start server with debug logging
+schedulo-server --log-level debug
 ```
 
 ### Configuration Issues
@@ -751,21 +625,24 @@ print(config.to_dict())
 reload_config("development")
 ```
 
-## 🎯 What's New in v3.2+
+## 🎯 What's New in v4.0+
+
+### Breaking Changes
+- **🚨 CLI Removed**: The package is now server-only. Use `schedulo-server` to start the REST API
+- **🔧 Server-First Architecture**: All functionality now accessed via HTTP API or Python library
 
 ### Major Enhancements
 - **🔧 Enhanced Section Parsing**: Complete retrieval of all course sections, lectures, tutorials, and labs
-- **🎨 Clean CLI Interface**: Simplified commands with intuitive structure (`schedulo` instead of complex nested commands)
-- **⚡ Improved Data Accuracy**: Fixed Banner system parsing to capture all available course sections  
-- **🚀 Better User Experience**: Streamlined commands and comprehensive section information
-- **👨‍🏫 Professor Ratings**: New `schedulo professor` command with Rate My Professor integration
-- **📚 Catalog Access**: New `--catalog` option to browse complete course catalogs without term requirements
+- **⚡ Improved Data Accuracy**: Fixed Banner system parsing to capture all available course sections
+- **🚀 Better Performance**: Optimized server with worker support
+- **👨‍🏫 Professor Ratings**: Rate My Professor integration via API endpoints
+- **📚 Complete REST API**: All functionality available via HTTP endpoints
 - **🎯 Smart Subject Validation**: University-specific subject code validation (4-letter for Carleton, 3-letter for UOttawa)
 
 ### Architecture Improvements
 - **🏗️ Clean Architecture**: Proper layered design with separation of concerns
 - **🔧 Service Layer**: Business logic separated from data access
-- **🎯 Single Responsibility**: Each module has one clear purpose  
+- **🎯 Single Responsibility**: Each module has one clear purpose
 - **🔄 Dependency Inversion**: High-level modules don't depend on low-level details
 
 ### Developer Experience
@@ -773,20 +650,22 @@ reload_config("development")
 - **🧪 Better Testing**: Clear boundaries enable comprehensive testing
 - **📚 Better Documentation**: Comprehensive examples and API docs
 - **🔧 Easy Extension**: Add new universities via simple interfaces
+- **🌐 API-First**: Build your own clients or integrate with any platform
 
-### User Experience  
+### User Experience
 - **🎨 Consistent APIs**: Same patterns across all universities
 - **⚡ Better Performance**: Improved caching and parallel processing
 - **🔍 Better Error Messages**: Structured exceptions with helpful details
 - **📊 Richer Data**: Enhanced models with metadata and validation
+- **🌐 Universal Access**: Use any HTTP client to consume the API
 
 ## 🤝 Contributing
 
-We welcome contributions! The new architecture makes it much easier to contribute:
+We welcome contributions! The architecture makes it easy to contribute:
 
 1. **Add Universities**: Implement `UniversityProvider` interface
-2. **Add Features**: Extend service classes with new functionality  
-3. **Add Interfaces**: Create new CLI commands or API endpoints
+2. **Add Features**: Extend service classes with new functionality
+3. **Add API Endpoints**: Create new REST API endpoints
 4. **Fix Bugs**: Clear modular structure makes debugging easier
 
 ### Contribution Process
@@ -818,8 +697,9 @@ GNU LGPLv3.0 - See the `COPYING` and `COPYING.LESSER` files for details.
 
 ---
 
-**Ready to explore university course data with enhanced section parsing and clean CLI?** 
+**Ready to explore university course data via REST API?**
 ```bash
 pip install schedulo-api
-schedulo terms carleton  # Get started!
+schedulo-server --port 8000  # Start the server
+# Visit http://localhost:8000/docs for interactive documentation
 ```

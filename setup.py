@@ -74,7 +74,7 @@ setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
     entry_points={
-        "console_scripts": ["schedulo-api=uoapi.cli:cli"],
+        "console_scripts": ["schedulo-server=uoapi.server.cli:main"],
     },
     install_requires=REQUIRED,
     extras_require=EXTRAS,
@@ -83,8 +83,8 @@ setup(
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
-        "Development Status :: 2 - Pre-Alpha",
-        "Environment :: Console",
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: Web Environment",
         "Intended Audience :: Education",
         "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
         "Natural Language :: English",

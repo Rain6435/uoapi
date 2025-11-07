@@ -1,80 +1,77 @@
 """
-CLI interface for the FastAPI server module.
+CLI entry point for the Schedulo API server.
+This is the only command-line interface for the package.
 """
 
 import sys
-import json
 import argparse
-from typing import Any
-
-from uoapi.cli_tools import make_parser, make_cli
 
 
-# CLI metadata
-help = "Start FastAPI server to serve course data via HTTP API"
-description = (
-    "Launch a FastAPI web server that provides HTTP endpoints for accessing "
-    "University of Ottawa and Carleton University course data. The server "
-    "provides RESTful API endpoints for querying courses, subjects, and university information."
-)
-epilog = (
-    "Examples:\n"
-    "  schedulo-api --university uottawa server --port 8000\n"
-    "  schedulo-api --university carleton server --host 0.0.0.0 --port 8080\n"
-    "  schedulo-api --university uottawa server --reload --log-level debug\n\n"
-    "API Endpoints:\n"
-    "  GET /health - Health check\n"
-    "  GET /universities - List available universities\n"
-    "  GET /universities/{university}/info - University information\n"
-    "  GET /universities/{university}/subjects - Available subjects\n"
-    "  GET /universities/{university}/courses - Course data with filtering\n\n"
-    "Documentation available at /docs and /redoc when server is running"
-)
+def create_parser():
+    """Create argument parser for server command."""
+    parser = argparse.ArgumentParser(
+        prog="schedulo-server",
+        description=(
+            "Launch the Schedulo API web server that provides HTTP endpoints for accessing "
+            "University of Ottawa and Carleton University course data. The server "
+            "provides RESTful API endpoints for querying courses, subjects, and university information."
+        ),
+        epilog=(
+            "Examples:\n"
+            "  schedulo-server --port 8000\n"
+            "  schedulo-server --host 0.0.0.0 --port 8080\n"
+            "  schedulo-server --reload --log-level debug\n\n"
+            "API Endpoints:\n"
+            "  GET /health - Health check\n"
+            "  GET /universities - List available universities\n"
+            "  GET /universities/{university}/info - University information\n"
+            "  GET /universities/{university}/subjects - Available subjects\n"
+            "  GET /universities/{university}/courses - Course data with filtering\n\n"
+            "Documentation available at /docs and /redoc when server is running"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
 
-
-@make_parser(description=description, epilog=epilog)
-def parser(default: argparse.ArgumentParser):
-    """Configure command line arguments for server module."""
-
-    default.add_argument(
+    parser.add_argument(
         "--host",
         default="127.0.0.1",
         help="Host to bind the server to (default: 127.0.0.1)",
     )
 
-    default.add_argument(
+    parser.add_argument(
         "--port",
         type=int,
         default=8000,
         help="Port to bind the server to (default: 8000)",
     )
 
-    default.add_argument(
+    parser.add_argument(
         "--reload",
         action="store_true",
         help="Enable auto-reload on code changes (development mode)",
     )
 
-    default.add_argument(
+    parser.add_argument(
         "--log-level",
         choices=["critical", "error", "warning", "info", "debug", "trace"],
         default="info",
         help="Set the logging level (default: info)",
     )
 
-    default.add_argument(
-        "--workers", type=int, default=1, help="Number of worker processes (default: 1)"
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Number of worker processes (default: 1)",
     )
 
-    return default
+    return parser
 
 
-@make_cli(parser)
-def cli(args=None):
-    """Main CLI function for server module."""
-    if args is None:
-        print("Did not receive any arguments", file=sys.stderr)
-        sys.exit(1)
+def main(argv=None):
+    """Main entry point for server command."""
+    parser = create_parser()
+    args = parser.parse_args(argv)
 
     try:
         # Import uvicorn here to avoid import errors if not installed
@@ -127,10 +124,5 @@ def cli(args=None):
         sys.exit(1)
 
 
-def main(args):
-    """Alternative entry point for direct usage."""
-    return cli(args)
-
-
 if __name__ == "__main__":
-    cli()
+    main()
