@@ -95,7 +95,7 @@ class Prereq:
         # the if is if they were included but not part of the match
         for key, value in self.rep_codes.items():
             try:
-                if match_obj.group(key) != None:
+                if match_obj.group(key) is not None:
                     self.subs[key] = match_obj.group(key)
                     match_str = match_str.replace(match_obj.group(key), value)
             except IndexError:

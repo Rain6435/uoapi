@@ -519,7 +519,7 @@ def create_app() -> FastAPI:
                     all_courses = all_courses[:limit]
 
             # Group by subject for response
-            courses_by_subject = {}
+            courses_by_subject: Dict[str, List[Any]] = {}
             for course in all_courses:
                 subject = course.subject_code
                 if subject not in courses_by_subject:
@@ -802,7 +802,7 @@ def create_app() -> FastAPI:
                             pass
 
             # Group sections by section letter and fix section naming issues
-            sections_by_group = {}
+            sections_by_group: Dict[str, Any] = {}
 
             for section in course.sections:
                 # Fix section naming issues

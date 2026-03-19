@@ -255,19 +255,19 @@ class DefaultCourseService(CourseService):
             }
 
             # Course credit distribution
-            credits_dist = {}
+            credits_dist: Dict[str, int] = {}
             for course in courses:
                 credit_str = str(course.credits)
                 credits_dist[credit_str] = credits_dist.get(credit_str, 0) + 1
-            stats["credit_distribution"] = credits_dist
+            stats["credit_distribution"] = credits_dist  # type: ignore
 
             # Subject distribution
-            subject_dist = {}
+            subject_dist: Dict[str, int] = {}
             for course in courses:
                 subject_dist[course.subject_code] = (
                     subject_dist.get(course.subject_code, 0) + 1
                 )
-            stats["subject_distribution"] = dict(
+            stats["subject_distribution"] = dict(  # type: ignore
                 sorted(subject_dist.items(), key=lambda x: x[1], reverse=True)[:10]
             )
 

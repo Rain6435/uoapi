@@ -5,7 +5,7 @@ This module wraps the existing Carleton discovery functionality
 to implement the UniversityProvider interface.
 """
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Any
 import logging
 import time
 from datetime import datetime
@@ -48,7 +48,7 @@ class CarletonProvider(BaseUniversityProvider):
         self._discovery = CarletonDiscovery(
             max_workers=max_workers, cookie_file=cookie_file
         )
-        self._catalog_data = None
+        self._catalog_data: Optional[Dict[str, Any]] = None
         self._subjects_from_catalog = None
 
         # Initialize programs provider
@@ -191,6 +191,7 @@ class CarletonProvider(BaseUniversityProvider):
                         prerequisite_courses=course_data.get("prerequisites", []),
                         sections=[],  # Catalog data doesn't include live sections
                         is_offered=True,  # Assume offered if in catalog
+                        last_updated=None,
                     )
                     courses.append(course)
                 except Exception as e:
@@ -378,37 +379,44 @@ class CarletonProvider(BaseUniversityProvider):
         Returns:
             Course object in new format
         """
-        # Convert sections
+        # Convert sections from old format
         sections = []
-        for old_section in old_course.sections:
-            # Convert meeting times
-            meeting_times = []
-            for old_mt in old_section.meeting_times:
-                meeting_times.append(
-                    MeetingTime(
-                        start_date=old_mt.start_date,
-                        end_date=old_mt.end_date,
-                        days=old_mt.days,
-                        start_time=old_mt.start_time,
-                        end_time=old_mt.end_time,
+        for section_id, old_section in old_course.sections.items():
+            # Extract lecture component (which has the main data)
+            if "Lecture" in old_section.components:
+                lecture_component = old_section.components["Lecture"]
+
+                # Convert meeting times
+                meeting_times = []
+                if lecture_component.meeting_times:
+                    for old_mt in lecture_component.meeting_times:
+                        meeting_times.append(
+                            MeetingTime(
+                                start_date=old_mt.start_date,
+                                end_date=old_mt.end_date,
+                                days=old_mt.days,
+                                start_time=old_mt.start_time,
+                                end_time=old_mt.end_time,
+                            )
+                        )
+
+                sections.append(
+                    CourseSection(
+                        crn=lecture_component.crn,
+                        section=section_id,
+                        status=lecture_component.status,
+                        credits=lecture_component.credits,
+                        schedule_type="Lecture",
+                        instructor=lecture_component.instructor,
+                        meeting_times=meeting_times,
+                        notes=(
+                            lecture_component.notes if lecture_component.notes else []
+                        ),
+                        capacity=None,  # Not available in old format
+                        enrolled=None,
+                        remaining=None,
                     )
                 )
-
-            sections.append(
-                CourseSection(
-                    crn=old_section.crn,
-                    section=old_section.section,
-                    status=old_section.status,
-                    credits=old_section.credits,
-                    schedule_type=old_section.schedule_type,
-                    instructor=old_section.instructor,
-                    meeting_times=meeting_times,
-                    notes=old_section.notes,
-                    capacity=None,  # Not available in old format
-                    enrolled=None,
-                    remaining=None,
-                )
-            )
 
         return Course(
             course_code=self._normalize_course_code(old_course.course_code),

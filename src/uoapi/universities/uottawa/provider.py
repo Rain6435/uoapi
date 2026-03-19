@@ -184,6 +184,7 @@ class UOttawaProvider(BaseUniversityProvider):
                             prerequisite_courses=prerequisite_courses,
                             sections=[],  # Catalog data doesn't include live sections
                             is_offered=True,  # Assume offered if in catalog
+                            last_updated=None,
                         )
                         courses.append(course)
                     except Exception as e:
@@ -269,6 +270,7 @@ class UOttawaProvider(BaseUniversityProvider):
             prerequisite_courses=old_course_data.get("prerequisites", []),
             sections=[],  # UOttawa provider doesn't have live section data
             is_offered=True,  # Assume offered if in catalog
+            last_updated=None,
         )
 
     def supports_live_data(self) -> bool:

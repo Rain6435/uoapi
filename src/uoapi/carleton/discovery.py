@@ -558,7 +558,6 @@ class CarletonDiscovery:
 
                             # Find credits - look for numeric values
                             credits = 0.0
-                            credits_text = ""
                             for i in range(
                                 crn_cell_idx + 2, min(len(cells), crn_cell_idx + 6)
                             ):
@@ -566,7 +565,6 @@ class CarletonDiscovery:
                                 try:
                                     if cell_text and float(cell_text) > 0:
                                         credits = float(cell_text)
-                                        credits_text = cell_text
                                         break
                                 except ValueError:
                                     continue

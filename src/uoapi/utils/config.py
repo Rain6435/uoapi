@@ -7,7 +7,7 @@ and settings for the application.
 
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
 
@@ -74,10 +74,10 @@ class APIConfig:
     reload: bool = False
 
     # CORS settings
-    cors_origins: list = None
+    cors_origins: Optional[List[str]] = None
     cors_credentials: bool = True
-    cors_methods: list = None
-    cors_headers: list = None
+    cors_methods: Optional[List[str]] = None
+    cors_headers: Optional[List[str]] = None
 
     # Rate limiting
     rate_limit_enabled: bool = True
@@ -110,7 +110,7 @@ class LoggingConfig:
     console_enabled: bool = True
 
     # Logger levels for specific modules
-    logger_levels: Dict[str, str] = None
+    logger_levels: Optional[Dict[str, str]] = None
 
     def __post_init__(self):
         if self.logger_levels is None:

@@ -66,7 +66,9 @@ class DefaultRatingService(RatingService):
                 logger.error(f"No school mapping for university: {university}")
                 return None
 
-            rating_data = get_instructor_rating(first_name, last_name, school_name)
+            rating_data = get_instructor_rating(
+                f"{first_name} {last_name}", school_name
+            )
 
             # Cache the result (even if None)
             self._rating_cache[cache_key] = rating_data
@@ -234,7 +236,10 @@ class DefaultRatingService(RatingService):
         try:
             from uoapi.rmp import parse_instructor_name
 
-            return parse_instructor_name(full_name)
+            result = parse_instructor_name(full_name)
+            if result is None:
+                raise ValueError("parse_instructor_name returned None")
+            return result
         except Exception as e:
             logger.warning(f"Failed to parse instructor name '{full_name}': {e}")
 

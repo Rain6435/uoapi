@@ -3,7 +3,7 @@ Data models for Carleton University course discovery
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
 @dataclass
@@ -25,7 +25,7 @@ class ComponentInstance:
     instructor: str
     status: str
     meeting_times: List[MeetingTime]
-    notes: List[str] = None
+    notes: Optional[List[str]] = None
 
     def __post_init__(self):
         if self.notes is None:
@@ -43,11 +43,11 @@ class CourseComponent:
     instructor: str = ""
     status: str = ""
     credits: float = 0.0
-    meeting_times: List[MeetingTime] = None
-    notes: List[str] = None
+    meeting_times: Optional[List[MeetingTime]] = None
+    notes: Optional[List[str]] = None
 
     # For Tutorial: multiple choices
-    choices: Dict[str, ComponentInstance] = None
+    choices: Optional[Dict[str, ComponentInstance]] = None
 
     def __post_init__(self):
         if self.meeting_times is None:
