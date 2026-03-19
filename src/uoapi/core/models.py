@@ -7,7 +7,7 @@ implementations, providing a consistent interface for course data.
 
 from typing import List, Optional, Union, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 
 
@@ -322,12 +322,14 @@ class Course(BaseModel):
     # Metadata
     last_updated: Optional[datetime] = Field(None, description="Last update timestamp")
 
-    @validator("course_code")
+    @field_validator("course_code")
+    @classmethod
     def normalize_course_code(cls, v):
         """Normalize course code format."""
         return v.upper().replace(" ", "")
 
-    @validator("subject_code")
+    @field_validator("subject_code")
+    @classmethod
     def normalize_subject_code(cls, v):
         """Normalize subject code format."""
         return v.upper()

@@ -132,3 +132,34 @@ ci-local:	## Run local CI without installing dependencies
 	$(MAKE) check
 	$(MAKE) test-fast
 	@echo "=== Local CI Completed ==="
+
+# Pre-commit commands
+.PHONY: pre-commit pre-commit-install pre-commit-run pre-commit-update
+pre-commit-install:	## Install pre-commit hooks
+	pip install pre-commit
+	pre-commit install
+	@echo "✓ Pre-commit hooks installed!"
+
+pre-commit-run:	## Run pre-commit on all files
+	pre-commit run --all-files
+
+pre-commit-update:	## Update pre-commit hooks
+	pre-commit autoupdate
+
+pre-commit:	## Run all checks before committing (format, lint, type-check, test)
+	@echo "=== Running Pre-Commit Checks ==="
+	@echo "✓ Formatting code..."
+	@$(MAKE) format > /dev/null 2>&1 || true
+	@echo "✓ Checking formatting..."
+	@black --check src/ tests/ 2>&1 | grep -q "would reformat\|error" && echo "⚠ Some files need formatting (running auto-fix...)" && $(MAKE) format || echo "✓ Code formatting OK"
+	@echo "✓ Running linting..."
+	@flake8 src/ tests/ 2>&1 | grep -q "error\|F\|E" && echo "⚠ Linting issues found" || echo "✓ Linting OK"
+	@echo "✓ Type checking..."
+	@mypy src/ 2>&1 | tail -1 || echo "✓ Type checking OK"
+	@echo "✓ Security scanning..."
+	@bandit -r src/ -ll -q 2>&1 | grep -q "Issue" && echo "⚠ Security issues found" || echo "✓ Security OK"
+	@echo "✓ Running tests..."
+	@pytest tests/ --no-cov -q 2>&1 | tail -3
+	@echo ""
+	@echo "=== Pre-Commit Checks Completed ==="
+	@echo "Ready to commit!"

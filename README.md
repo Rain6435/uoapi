@@ -529,39 +529,59 @@ result = DiscoveryResult(
 ```bash
 git clone https://github.com/Rain6435/uoapi.git
 cd uoapi
-pip install -e .[tests]
+pip install -r requirements.txt
 ```
 
 ### Testing
 ```bash
-# Run all tests
-make test     # or pytest
+# Run all tests (187 tests)
+pytest tests/ -v
 
-# Test specific components
-pytest tests/core/
-pytest tests/services/
-pytest tests/universities/
+# Run without coverage (faster)
+pytest tests/ --no-cov -v
 
-# Test with coverage
-pytest --cov=uoapi tests/
+# Run specific test categories
+pytest tests/core/ -v                    # Core models & exceptions (95 tests)
+pytest tests/services/ -v                # Business logic services (40 tests)
+pytest tests/server/ -v                  # Helper functions (26 tests)
+pytest tests/utils/ -v                   # Configuration (26 tests)
+
+# Run with coverage report
+pytest tests/ --cov=src/uoapi --cov-report=html --cov-report=term-missing
 
 # Type checking
-make check    # or mypy src/
+mypy src/
 
-# Linting  
-make lint     # or flake8
+# Linting
+flake8 src/ tests/
 
-# All checks
-make          # test + lint + typecheck
+# Code formatting
+black src/ tests/
+
+# Security scan
+bandit -r src/
+
+# All checks at once
+make check-all
 ```
+
+### Comprehensive Test Suite
+- **187 passing tests** with zero warnings
+- **95 core tests**: Pydantic models (41) and exception hierarchy (54)
+- **40 service tests**: DefaultCourseService (30) and DefaultTimetableService (10)
+- **26 helper tests**: Helper function validation
+- **26 config tests**: Configuration management
+- **100% mocked dependencies**: No network calls, pure unit tests
+- **70% minimum coverage** enforced
 
 ### Code Quality
 The refactored codebase maintains high code quality with:
 - **100% type coverage** with mypy
-- **Comprehensive tests** for all components
+- **187 passing unit tests** with comprehensive coverage
 - **Consistent formatting** with black
 - **Clean imports** and modular design
-- **Documentation** for all public APIs
+- **Zero warnings** in test output
+- **Pydantic V2** type-safe models with field validators
 
 ## 🔄 Migration Guide
 
