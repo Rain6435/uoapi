@@ -11,14 +11,22 @@ import logging
 import re
 import sys
 
-from .models import Course, CourseSection, CourseComponent, ComponentInstance, MeetingTime
+from .models import (
+    Course,
+    CourseSection,
+    CourseComponent,
+    ComponentInstance,
+    MeetingTime,
+)
 from dataclasses import dataclass
 from typing import List
+
 
 # Temporary model for raw parsing before grouping
 @dataclass
 class RawCourseSection:
     """Raw course section details from Banner parsing"""
+
     crn: str
     section: str
     status: str
@@ -27,6 +35,7 @@ class RawCourseSection:
     instructor: str
     meeting_times: List[MeetingTime]
     notes: List[str]
+
 
 logger = logging.getLogger(__name__)
 
@@ -58,35 +67,41 @@ class CarletonDiscovery:
     def _group_course_sections(self, sections_data):
         """
         Group course sections by logical section identifier using new component structure.
-        
+
         Creates structure: {"A": CourseSection, "B": CourseSection, ...}
         Where each CourseSection has components: {"Lecture": ..., "Tutorial": {...}}
         """
         if not sections_data:
             return {}
-        
+
         # First pass: identify lectures and tutorials
         lectures = {}  # {section_id: raw_section_data}
         tutorials = {}  # {section_id: [tutorial_options]}
-        
+
         for raw_section in sections_data:
             section_name = raw_section.section
             schedule_type = raw_section.schedule_type.lower()
-            
+
             if schedule_type == "lecture":
                 # This is a main lecture component
-                print(f"[DEBUG] Lecture found: section='{section_name}' CRN={raw_section.crn}", file=sys.stderr)
+                print(
+                    f"[DEBUG] Lecture found: section='{section_name}' CRN={raw_section.crn}",
+                    file=sys.stderr,
+                )
                 lectures[section_name] = raw_section
             else:
                 # This is likely a tutorial - determine which section it belongs to
                 # Parse section identifier from tutorial name or notes
                 parent_section = self._identify_parent_section(raw_section)
-                print(f"[DEBUG] Tutorial found: section='{section_name}' -> parent='{parent_section}' CRN={raw_section.crn}", file=sys.stderr)
+                print(
+                    f"[DEBUG] Tutorial found: section='{section_name}' -> parent='{parent_section}' CRN={raw_section.crn}",
+                    file=sys.stderr,
+                )
                 if parent_section:
                     if parent_section not in tutorials:
                         tutorials[parent_section] = []
                     tutorials[parent_section].append(raw_section)
-        
+
         # Fix "Open" sections - either based on tutorials or default to "A"
         corrected_lectures = {}
         for section_id, lecture_data in lectures.items():
@@ -100,21 +115,27 @@ class CarletonDiscovery:
                             match = re.search(r"Also Register in:.*\s([A-Z])\d", note)
                             if match:
                                 real_section = match.group(1)
-                                print(f"[DEBUG] Correcting 'Open' section to '{real_section}' based on tutorial note: {note}", file=sys.stderr)
+                                print(
+                                    f"[DEBUG] Correcting 'Open' section to '{real_section}' based on tutorial note: {note}",
+                                    file=sys.stderr,
+                                )
                                 break
-                
+
                 # If no tutorial relationship found, default "Open" to "A" for consistency
                 if not real_section:
                     real_section = "A"
-                    print(f"[DEBUG] Defaulting 'Open' section to 'A' (no tutorial relationships found)", file=sys.stderr)
-                
+                    print(
+                        "[DEBUG] Defaulting 'Open' section to 'A' (no tutorial relationships found)",
+                        file=sys.stderr,
+                    )
+
                 corrected_lectures[real_section] = lecture_data
             else:
                 corrected_lectures[section_id] = lecture_data
-        
+
         # Build the new structure
         grouped_sections = {}
-        
+
         for section_id, lecture_data in corrected_lectures.items():
             # Create lecture component
             lecture_component = CourseComponent(
@@ -124,12 +145,12 @@ class CarletonDiscovery:
                 status=lecture_data.status,
                 credits=lecture_data.credits,
                 meeting_times=lecture_data.meeting_times[:],
-                notes=lecture_data.notes[:]
+                notes=lecture_data.notes[:],
             )
-            
+
             # Create section components dict
             components = {"Lecture": lecture_component}
-            
+
             # Add tutorial component if tutorials exist for this section
             if section_id in tutorials:
                 tutorial_choices = {}
@@ -139,24 +160,22 @@ class CarletonDiscovery:
                         instructor=tutorial_data.instructor,
                         status=tutorial_data.status,
                         meeting_times=tutorial_data.meeting_times[:],
-                        notes=tutorial_data.notes[:]
+                        notes=tutorial_data.notes[:],
                     )
                     tutorial_choices[tutorial_data.section] = tutorial_instance
-                
+
                 tutorial_component = CourseComponent(
-                    component_type="Tutorial",
-                    choices=tutorial_choices
+                    component_type="Tutorial", choices=tutorial_choices
                 )
                 components["Tutorial"] = tutorial_component
-            
+
             # Create the course section
             grouped_sections[section_id] = CourseSection(
-                section=section_id,
-                components=components
+                section=section_id, components=components
             )
-        
+
         return grouped_sections
-    
+
     def _identify_parent_section(self, raw_section):
         """
         Identify which main section a tutorial belongs to.
@@ -170,14 +189,14 @@ class CarletonDiscovery:
                 match = re.search(r"Also Register in:.*\s([A-Z])(?:\s|$)", note)
                 if match:
                     return match.group(1)
-        
+
         # Fallback: extract base letter from section name
         # Example: "A1" -> "A", "B2" -> "B"
         section_name = raw_section.section
-        base_match = re.match(r'^([A-Z]+)', section_name)
+        base_match = re.match(r"^([A-Z]+)", section_name)
         if base_match:
             return base_match.group(1)
-        
+
         # If we can't determine parent, return None (orphaned tutorial)
         return None
 
@@ -615,7 +634,10 @@ class CarletonDiscovery:
                                 notes=[],
                             )
                             sections_data.append(current_section)
-                            print(f"[DEBUG] Raw Banner section: '{section}' ({schedule_type}) CRN {crn}", file=sys.stderr)
+                            print(
+                                f"[DEBUG] Raw Banner section: '{section}' ({schedule_type}) CRN {crn}",
+                                file=sys.stderr,
+                            )
                             logger.debug(
                                 f"Added section {section} ({schedule_type}) with CRN {crn}"
                             )
@@ -781,5 +803,5 @@ class CarletonDiscovery:
             )
             results.append(course)
 
-        print(f"[DEBUG] All course queries complete.", file=sys.stderr)
+        print("[DEBUG] All course queries complete.", file=sys.stderr)
         return results

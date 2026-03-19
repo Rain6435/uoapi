@@ -13,8 +13,6 @@ from uoapi.services.timetable_service import DefaultTimetableService
 from uoapi.services.course_service import DefaultCourseService
 
 
-
-
 @pytest.fixture
 def mock_course_service():
     """Create mock course service."""
@@ -47,7 +45,9 @@ def mock_uottawa_provider():
 
 
 @pytest.fixture
-def timetable_service_with_mocks(mock_course_service, mock_carleton_provider, mock_uottawa_provider):
+def timetable_service_with_mocks(
+    mock_course_service, mock_carleton_provider, mock_uottawa_provider
+):
     """Create timetable service with mocked course service."""
     mock_course_service.get_all_universities.return_value = [
         University.CARLETON,
@@ -92,7 +92,9 @@ class TestGetAvailableTerms:
     def test_raises_for_unsupported_university(self, timetable_service_with_mocks):
         """Test raises for unsupported university."""
         service, mock_course_service, _, _ = timetable_service_with_mocks
-        mock_course_service.get_provider.side_effect = UniversityNotSupportedError("invalid")
+        mock_course_service.get_provider.side_effect = UniversityNotSupportedError(
+            "invalid"
+        )
         with pytest.raises(UniversityNotSupportedError):
             service.get_available_terms(Mock())
 
@@ -169,7 +171,9 @@ class TestGetLiveCourses:
     def test_raises_for_unsupported_university(self, timetable_service_with_mocks):
         """Test raises for unsupported university."""
         service, mock_course_service, _, _ = timetable_service_with_mocks
-        mock_course_service.get_provider.side_effect = UniversityNotSupportedError("invalid")
+        mock_course_service.get_provider.side_effect = UniversityNotSupportedError(
+            "invalid"
+        )
         with pytest.raises(UniversityNotSupportedError):
             service.get_live_courses(Mock(), "202530", ["COMP"])
 

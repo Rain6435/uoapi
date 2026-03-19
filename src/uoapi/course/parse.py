@@ -5,7 +5,7 @@ This module provides functions to extract course information from
 HTML pages scraped from the University of Ottawa course catalog.
 """
 
-from typing import cast, Tuple, List, Union
+from typing import cast, Tuple, Union
 from bs4 import Tag, NavigableString
 
 from uoapi.course import utils, patterns as pt

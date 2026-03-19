@@ -11,8 +11,6 @@ from uoapi.server.app import (
 from uoapi.core.models import University
 
 
-
-
 class TestNormalizeUniversity:
     """Tests for normalize_university helper function."""
 

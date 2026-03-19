@@ -35,7 +35,7 @@ def scrape_subjects(url: str = course_url):
         A list of Subject objects converted to dictionaries
     """
     response = requests.get(url, timeout=30)
-    response.encoding = 'utf-8'  # Ensure proper UTF-8 encoding
+    response.encoding = "utf-8"  # Ensure proper UTF-8 encoding
     page = response.text
     soup = BeautifulSoup(page, "html.parser")
 
@@ -122,7 +122,7 @@ def get_courses(link: str):
     prerequisites, etc.
     """
     response = requests.get(link, timeout=30)
-    response.encoding = 'utf-8'  # Ensure proper UTF-8 encoding
+    response.encoding = "utf-8"  # Ensure proper UTF-8 encoding
     raw_courses = BeautifulSoup(
         response.text,
         "html.parser",

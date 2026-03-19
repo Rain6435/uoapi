@@ -2,7 +2,6 @@ from typing import List, Dict, Optional, Any
 import requests
 import re
 
-
 # GraphQL endpoint and headers for RateMyProfessor API
 GRAPHQL_ENDPOINT = "https://www.ratemyprofessors.com/graphql"
 

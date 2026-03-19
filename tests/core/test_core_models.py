@@ -19,8 +19,6 @@ from uoapi.core.models import (
 )
 
 
-
-
 class TestUniversityEnum:
     """Tests for University enum."""
 
@@ -79,6 +77,7 @@ class TestSubject:
     def test_subject_required_fields(self):
         """Test Subject requires name, code, and university."""
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
             Subject(name="CS", code="CS")  # Missing university
 

@@ -2,8 +2,8 @@
 FastAPI server module for serving course data via HTTP API.
 """
 
-from .app import create_app
-from .cli import cli, main, parser, help, description, epilog
+from .app import create_app  # noqa: F401
+from .cli import cli, main, parser, help, description, epilog  # noqa: F401
 
 # CLI metadata for main CLI integration
 cli_help = help

@@ -20,13 +20,13 @@ class MeetingTime:
 @dataclass
 class ComponentInstance:
     """Individual component instance (e.g., specific tutorial A1, A2)"""
-    
+
     crn: str
     instructor: str
     status: str
     meeting_times: List[MeetingTime]
     notes: List[str] = None
-    
+
     def __post_init__(self):
         if self.notes is None:
             self.notes = []
@@ -35,9 +35,9 @@ class ComponentInstance:
 @dataclass
 class CourseComponent:
     """Course component (Lecture or Tutorial with options)"""
-    
+
     component_type: str  # "Lecture" or "Tutorial"
-    
+
     # For Lecture: single instance
     crn: str = ""
     instructor: str = ""
@@ -45,10 +45,10 @@ class CourseComponent:
     credits: float = 0.0
     meeting_times: List[MeetingTime] = None
     notes: List[str] = None
-    
+
     # For Tutorial: multiple choices
     choices: Dict[str, ComponentInstance] = None
-    
+
     def __post_init__(self):
         if self.meeting_times is None:
             self.meeting_times = []
@@ -61,7 +61,7 @@ class CourseComponent:
 @dataclass
 class CourseSection:
     """Course section with components structure"""
-    
+
     section: str
     components: Dict[str, CourseComponent]  # "Lecture", "Tutorial", etc.
 

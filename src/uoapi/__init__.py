@@ -26,18 +26,18 @@ Usage:
 import importlib
 from typing import List
 
-# Import new architecture components
-from . import core
-from . import universities
-from . import services
-from . import interfaces
-from . import utils
+# Import new architecture components (re-exported)
+from . import core  # noqa: F401
+from . import universities  # noqa: F401
+from . import services  # noqa: F401
+from . import interfaces  # noqa: F401
+from . import utils  # noqa: F401
 
 # Import version
-from .__version__ import __version__
+from .__version__ import __version__  # noqa: F401
 
 # Import logging configuration
-from . import log_config
+from . import log_config  # noqa: F401
 
 # Backward compatibility: dynamically load old modules (non-CLI modules only)
 legacy_modules: List[str] = []

@@ -8,12 +8,20 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from uoapi.core import University
+from uoapi.core import University  # noqa: F401
 from uoapi.universities.carleton.provider import CarletonProvider
 from uoapi.universities.uottawa.provider import UOttawaProvider
-from uoapi.services import DefaultCourseService, DefaultTimetableService
-from uoapi.universities.uottawa.programs import Program, ProgramType, ProgramDegreeType, Faculty, Discipline
-
+from uoapi.services import (  # noqa: F401
+    DefaultCourseService,
+    DefaultTimetableService,
+)
+from uoapi.universities.uottawa.programs import (  # noqa: F401
+    Program,
+    ProgramType,
+    ProgramDegreeType,
+    Faculty,
+    Discipline,
+)
 
 # Initialize providers
 _providers = {
@@ -244,6 +252,7 @@ class ProgramFiltersResponse(BaseModel):
 
 class BulkUniversityData(BaseModel):
     """University data for bulk export."""
+
     id: int
     name: str
     code: str
@@ -253,6 +262,7 @@ class BulkUniversityData(BaseModel):
 
 class BulkFacultyData(BaseModel):
     """Faculty data for bulk export."""
+
     id: int
     university_id: int
     name: str
@@ -262,6 +272,7 @@ class BulkFacultyData(BaseModel):
 
 class BulkProgramData(BaseModel):
     """Program data for bulk export."""
+
     id: int
     faculty_id: int
     name: str
@@ -273,6 +284,7 @@ class BulkProgramData(BaseModel):
 
 class BulkExportResponse(BaseModel):
     """Complete bulk export response matching Laravel schema."""
+
     universities: List[BulkUniversityData]
     faculties: List[BulkFacultyData]
     programs: List[BulkProgramData]
@@ -348,7 +360,9 @@ def create_app() -> FastAPI:
     @app.get("/universities/{university}/subjects", response_model=SubjectsResponse)
     async def get_university_subjects(
         university: str,
-        limit: int = Query(20, description="Maximum number of subjects to return", ge=1, le=1000),
+        limit: int = Query(
+            20, description="Maximum number of subjects to return", ge=1, le=1000
+        ),
     ):
         """Get list of available subjects for a university (limited)."""
         target_uni = normalize_university(university)
@@ -377,7 +391,9 @@ def create_app() -> FastAPI:
                 status_code=500, detail=f"Failed to get subjects: {str(e)}"
             )
 
-    @app.get("/universities/{university}/subjects/catalog", response_model=SubjectsResponse)
+    @app.get(
+        "/universities/{university}/subjects/catalog", response_model=SubjectsResponse
+    )
     async def get_all_university_subjects(
         university: str,
     ):
@@ -419,7 +435,7 @@ def create_app() -> FastAPI:
         try:
             provider = get_provider(target_uni)
             terms = provider.get_available_terms()
-            
+
             return {
                 "university": target_uni,
                 "terms": [{"code": code, "name": name} for code, name in terms],
@@ -430,14 +446,21 @@ def create_app() -> FastAPI:
                 status_code=500, detail=f"Failed to get terms: {str(e)}"
             )
 
-    @app.get("/universities/{university}/courses/catalog", response_model=CatalogCoursesResponse)
+    @app.get(
+        "/universities/{university}/courses/catalog",
+        response_model=CatalogCoursesResponse,
+    )
     async def get_catalog_courses(
         university: str,
         subjects: Optional[str] = Query(
-            None, description="Comma-separated list of subject codes (e.g., COMP,MATH for Carleton or CSI,MAT for UOttawa)"
+            None,
+            description="Comma-separated list of subject codes (e.g., COMP,MATH for Carleton or CSI,MAT for UOttawa)",
         ),
         limit: int = Query(
-            10, description="Maximum courses per subject (0 for no limit)", ge=0, le=1000
+            10,
+            description="Maximum courses per subject (0 for no limit)",
+            ge=0,
+            le=1000,
         ),
     ):
         """Get catalog courses (no live sections, no term required)."""
@@ -451,25 +474,35 @@ def create_app() -> FastAPI:
 
         try:
             provider = get_provider(target_uni)
-            
+
             # Parse subjects if provided
             subject_list = None
             if subjects:
                 subject_list = [s.strip().upper() for s in subjects.split(",")]
-                
+
                 # Validate subject code format based on university
                 for subject in subject_list:
                     is_valid = False
-                    if target_uni == "carleton" and len(subject) == 4 and subject.isalpha():
+                    if (
+                        target_uni == "carleton"
+                        and len(subject) == 4
+                        and subject.isalpha()
+                    ):
                         is_valid = True
-                    elif target_uni == "uottawa" and len(subject) == 3 and subject.isalpha():
+                    elif (
+                        target_uni == "uottawa"
+                        and len(subject) == 3
+                        and subject.isalpha()
+                    ):
                         is_valid = True
-                    
+
                     if not is_valid:
-                        expected_format = "4-letter" if target_uni == "carleton" else "3-letter"
+                        expected_format = (
+                            "4-letter" if target_uni == "carleton" else "3-letter"
+                        )
                         raise HTTPException(
                             status_code=400,
-                            detail=f"Invalid subject code '{subject}' for {target_uni}. Expected {expected_format} format."
+                            detail=f"Invalid subject code '{subject}' for {target_uni}. Expected {expected_format} format.",
                         )
 
             # Get catalog courses
@@ -491,7 +524,7 @@ def create_app() -> FastAPI:
                 subject = course.subject_code
                 if subject not in courses_by_subject:
                     courses_by_subject[subject] = []
-                
+
                 courses_by_subject[subject].append(
                     CourseData(
                         subject=course.subject_code,
@@ -517,7 +550,10 @@ def create_app() -> FastAPI:
                 status_code=500, detail=f"Failed to get catalog courses: {str(e)}"
             )
 
-    @app.get("/universities/{university}/professors/{first_name}/{last_name}", response_model=ProfessorRatingResponse)
+    @app.get(
+        "/universities/{university}/professors/{first_name}/{last_name}",
+        response_model=ProfessorRatingResponse,
+    )
     async def get_professor_rating(
         university: str,
         first_name: str,
@@ -534,40 +570,42 @@ def create_app() -> FastAPI:
 
         try:
             from uoapi.rmp.rate_my_prof import get_professor_ratings
-            
+
             # Map university names to school names for RMP
             university_to_school = {
                 "carleton": "Carleton University",
                 "uottawa": "University of Ottawa",
             }
-            
+
             if target_uni not in university_to_school:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Professor ratings not supported for {university}. Supported: carleton, uottawa"
+                    detail=f"Professor ratings not supported for {university}. Supported: carleton, uottawa",
                 )
-            
+
             school_name = university_to_school[target_uni]
-            
+
             # Get ratings using RMP API
             ratings = get_professor_ratings([(first_name, last_name)], school_name)
-            
+
             if not ratings or len(ratings) == 0:
                 raise HTTPException(
                     status_code=404,
-                    detail=f"No ratings found for {first_name} {last_name} at {school_name}"
+                    detail=f"No ratings found for {first_name} {last_name} at {school_name}",
                 )
-            
+
             professor = ratings[0]
-            
+
             # Generate profile URL if we have an RMP ID
             profile_url = None
-            if professor.get('rmp_id'):
-                profile_url = f"https://www.ratemyprofessors.com/professor/{professor['rmp_id']}"
-            
+            if professor.get("rmp_id"):
+                profile_url = (
+                    f"https://www.ratemyprofessors.com/professor/{professor['rmp_id']}"
+                )
+
             # Generate interpretation
             interpretation = None
-            rating = professor.get('rating')
+            rating = professor.get("rating")
             if rating:
                 if rating >= 4.0:
                     interpretation = "Excellent professor (4.0+ rating)"
@@ -577,7 +615,7 @@ def create_app() -> FastAPI:
                     interpretation = "Fair professor (2.0+ rating)"
                 else:
                     interpretation = "Below average professor (<2.0 rating)"
-            
+
             return ProfessorRatingResponse(
                 first_name=first_name,
                 last_name=last_name,
@@ -616,41 +654,41 @@ def create_app() -> FastAPI:
 
         try:
             provider = get_provider(target_uni)
-            
+
             # Extract subject code from course code (e.g., COMP from COMP1005)
             course_code = course_code.upper().replace(" ", "")
             subject = "".join(c for c in course_code if c.isalpha())
-            
+
             # Validate subject code format based on university
             is_valid = False
             if target_uni == "carleton" and len(subject) == 4 and subject.isalpha():
                 is_valid = True
             elif target_uni == "uottawa" and len(subject) == 3 and subject.isalpha():
                 is_valid = True
-            
+
             if not is_valid:
                 expected_format = "4-letter" if target_uni == "carleton" else "3-letter"
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid course code '{course_code}' for {target_uni}. Expected {expected_format} subject format."
+                    detail=f"Invalid course code '{course_code}' for {target_uni}. Expected {expected_format} subject format.",
                 )
-            
+
             # Get courses for this subject
             courses = provider.get_courses(subject_code=subject)
-            
+
             # Find the specific course
             target_course = None
             for course in courses:
                 if course.course_code.upper().replace(" ", "") == course_code:
                     target_course = course
                     break
-            
+
             if not target_course:
                 raise HTTPException(
                     status_code=404,
-                    detail=f"Course '{course_code}' not found in catalog for {target_uni}"
+                    detail=f"Course '{course_code}' not found in catalog for {target_uni}",
                 )
-            
+
             return {
                 "university": target_uni,
                 "course": {
@@ -659,7 +697,7 @@ def create_app() -> FastAPI:
                     "title": target_course.title,
                     "credits": str(target_course.credits),
                     "description": target_course.description,
-                }
+                },
             }
 
         except HTTPException:
@@ -669,7 +707,10 @@ def create_app() -> FastAPI:
                 status_code=500, detail=f"Failed to get course: {str(e)}"
             )
 
-    @app.get("/universities/{university}/courses/{course_code}/live", response_model=SingleCourseResponse)
+    @app.get(
+        "/universities/{university}/courses/{course_code}/live",
+        response_model=SingleCourseResponse,
+    )
     async def get_single_course_live(
         university: str,
         course_code: str,
@@ -690,7 +731,7 @@ def create_app() -> FastAPI:
 
         try:
             provider = get_provider(target_uni)
-            
+
             # Convert term and year to term code format
             if target_uni == "carleton":
                 term_mapping = {"winter": "10", "summer": "20", "fall": "30"}
@@ -701,97 +742,111 @@ def create_app() -> FastAPI:
             # Extract subject from course code
             course_code = course_code.upper().replace(" ", "")
             subject = "".join(c for c in course_code if c.isalpha())
-            
+
             # Validate subject code format
             is_valid = False
             if target_uni == "carleton" and len(subject) == 4 and subject.isalpha():
                 is_valid = True
             elif target_uni == "uottawa" and len(subject) == 3 and subject.isalpha():
                 is_valid = True
-            
+
             if not is_valid:
                 expected_format = "4-letter" if target_uni == "carleton" else "3-letter"
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid course code '{course_code}' for {target_uni}. Expected {expected_format} subject format."
+                    detail=f"Invalid course code '{course_code}' for {target_uni}. Expected {expected_format} subject format.",
                 )
 
             # Use the new direct single course discovery method
             course = provider.discover_single_course(
-                term_code=term_code,
-                course_code=course_code
+                term_code=term_code, course_code=course_code
             )
 
             if not course:
                 raise HTTPException(
                     status_code=404,
-                    detail=f"Course '{course_code}' not found for {term} {year} at {target_uni}"
+                    detail=f"Course '{course_code}' not found for {term} {year} at {target_uni}",
                 )
-            
+
             # Get instructor ratings if requested
             instructor_ratings = {}
             if include_ratings:
                 from uoapi.rmp.rate_my_prof import get_professor_ratings
+
                 university_to_school = {
                     "carleton": "Carleton University",
-                    "uottawa": "University of Ottawa"
+                    "uottawa": "University of Ottawa",
                 }
                 school_name = university_to_school.get(target_uni, "")
                 if school_name:
                     instructors = set()
                     for section in course.sections:
-                        if section.instructor and section.instructor.strip() and section.instructor != "TBA":
+                        if (
+                            section.instructor
+                            and section.instructor.strip()
+                            and section.instructor != "TBA"
+                        ):
                             name_parts = section.instructor.strip().split()
                             if len(name_parts) >= 2:
                                 instructors.add((name_parts[0], name_parts[-1]))
-                    
+
                     if instructors:
                         try:
-                            ratings = get_professor_ratings(list(instructors), school_name)
+                            ratings = get_professor_ratings(
+                                list(instructors), school_name
+                            )
                             for rating in ratings:
                                 full_name = f"{rating.get('first_name', '')} {rating.get('last_name', '')}".strip()
                                 instructor_ratings[full_name] = rating
                         except Exception:
                             pass
-            
+
             # Group sections by section letter and fix section naming issues
             sections_by_group = {}
-            
+
             for section in course.sections:
                 # Fix section naming issues
                 section_id = section.section.strip()
                 original_section_id = section_id  # Keep original for component name
-                
+
                 # Handle common parsing issues
                 if section_id in ["Open", "Full", "Waitlist"]:
                     # This is likely a status being misread as section
                     # Try to extract from notes or default to 'A'
                     section_id = "A"
                     original_section_id = "A"
-                    
+
                 # Extract the main section letter (A, B, C, D) from section codes like A1, A2, B1, etc.
                 main_section = section_id[0] if section_id else "A"
-                
+
                 # Use the original section ID as the component name (A, A1, A2, B, B1, B2, etc.)
-                component_name = original_section_id if original_section_id else main_section
-                
+                component_name = (
+                    original_section_id if original_section_id else main_section
+                )
+
                 if main_section not in sections_by_group:
                     sections_by_group[main_section] = []
-                
+
                 # Convert meeting times
                 meeting_times = []
                 for mt in section.meeting_times:
-                    meeting_times.append({
-                        "start_date": mt.start_date,
-                        "end_date": mt.end_date,
-                        "days": mt.days,
-                        "start_time": mt.start_time,
-                        "end_time": mt.end_time,
-                    })
-                
+                    meeting_times.append(
+                        {
+                            "start_date": mt.start_date,
+                            "end_date": mt.end_date,
+                            "days": mt.days,
+                            "start_time": mt.start_time,
+                            "end_time": mt.end_time,
+                        }
+                    )
+
                 # Get RMP rating for this instructor
                 rmp_rating = None
-                if include_ratings and section.instructor and section.instructor.strip():
+                if (
+                    include_ratings
+                    and section.instructor
+                    and section.instructor.strip()
+                ):
                     instructor_name = section.instructor.strip()
                     if instructor_name in instructor_ratings:
                         rating_data = instructor_ratings[instructor_name]
@@ -801,10 +856,12 @@ def create_app() -> FastAPI:
                             "num_ratings": rating_data.get("num_ratings", 0),
                             "department": rating_data.get("department"),
                             "rmp_id": rating_data.get("rmp_id"),
-                            "would_take_again_percent": rating_data.get("would_take_again_percent"),
+                            "would_take_again_percent": rating_data.get(
+                                "would_take_again_percent"
+                            ),
                             "avg_difficulty": rating_data.get("avg_difficulty"),
                         }
-                
+
                 # Fix credits issue - don't use CRN as credits
                 actual_credits = section.credits
                 if isinstance(actual_credits, (int, float)) and actual_credits > 10:
@@ -812,7 +869,7 @@ def create_app() -> FastAPI:
                     actual_credits = 0.5  # Default for most components
                     if section.schedule_type.lower() == "lecture":
                         actual_credits = course.credits if course.credits > 0 else 0.5
-                
+
                 component = {
                     "name": component_name,
                     "crn": section.crn,
@@ -824,18 +881,17 @@ def create_app() -> FastAPI:
                     "notes": section.notes,
                     "rmp_rating": rmp_rating,
                 }
-                
+
                 sections_by_group[main_section].append(component)
-            
+
             # Create structured response
             structured_sections = []
             for section_letter in sorted(sections_by_group.keys()):
                 components = sections_by_group[section_letter]
-                structured_sections.append({
-                    "section": section_letter,
-                    "components": components
-                })
-            
+                structured_sections.append(
+                    {"section": section_letter, "components": components}
+                )
+
             return {
                 "university": target_uni,
                 "term_code": term_code,
@@ -1093,11 +1149,24 @@ def create_app() -> FastAPI:
     @app.get("/universities/{university}/programs", response_model=ProgramsResponse)
     async def get_programs(
         university: str,
-        level: Optional[str] = Query(None, description="Filter by program level (undergraduate, graduate, dual_level)"),
-        degree_type: Optional[str] = Query(None, description="Filter by degree type (bachelor, master, doctorate, etc.)"),
-        faculty: Optional[str] = Query(None, description="Filter by faculty (arts, engineering, science, etc.)"),
-        discipline: Optional[str] = Query(None, description="Filter by discipline (computer_science, psychology, etc.)"),
-        limit: int = Query(50, description="Maximum number of programs to return", ge=1, le=500),
+        level: Optional[str] = Query(
+            None,
+            description="Filter by program level (undergraduate, graduate, dual_level)",
+        ),
+        degree_type: Optional[str] = Query(
+            None,
+            description="Filter by degree type (bachelor, master, doctorate, etc.)",
+        ),
+        faculty: Optional[str] = Query(
+            None, description="Filter by faculty (arts, engineering, science, etc.)"
+        ),
+        discipline: Optional[str] = Query(
+            None,
+            description="Filter by discipline (computer_science, psychology, etc.)",
+        ),
+        limit: int = Query(
+            50, description="Maximum number of programs to return", ge=1, le=500
+        ),
     ):
         """Get programs for a university with optional filtering."""
         target_uni = normalize_university(university)
@@ -1117,7 +1186,9 @@ def create_app() -> FastAPI:
 
         try:
             provider = get_provider(target_uni)
-            programs_provider = provider._programs_provider  # Access the programs provider
+            programs_provider = (
+                provider._programs_provider
+            )  # Access the programs provider
 
             # Convert string parameters to enum values if provided
             level_enum = None
@@ -1128,7 +1199,7 @@ def create_app() -> FastAPI:
                     valid_levels = [pt.value for pt in ProgramType]
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Invalid level '{level}'. Valid options: {valid_levels}"
+                        detail=f"Invalid level '{level}'. Valid options: {valid_levels}",
                     )
 
             degree_type_enum = None
@@ -1139,7 +1210,7 @@ def create_app() -> FastAPI:
                     valid_types = [dt.value for dt in ProgramDegreeType]
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Invalid degree_type '{degree_type}'. Valid options: {valid_types}"
+                        detail=f"Invalid degree_type '{degree_type}'. Valid options: {valid_types}",
                     )
 
             faculty_enum = None
@@ -1150,7 +1221,7 @@ def create_app() -> FastAPI:
                     valid_faculties = [f.value for f in Faculty]
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Invalid faculty '{faculty}'. Valid options: {valid_faculties}"
+                        detail=f"Invalid faculty '{faculty}'. Valid options: {valid_faculties}",
                     )
 
             discipline_enum = None
@@ -1161,7 +1232,7 @@ def create_app() -> FastAPI:
                     valid_disciplines = [d.value for d in Discipline]
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Invalid discipline '{discipline}'. Valid options: {valid_disciplines}"
+                        detail=f"Invalid discipline '{discipline}'. Valid options: {valid_disciplines}",
                     )
 
             # Get filtered programs
@@ -1178,20 +1249,24 @@ def create_app() -> FastAPI:
             # Convert to response model
             program_responses = []
             for program in limited_programs:
-                program_responses.append(ProgramResponse(
-                    name=program.name,
-                    university=program.university.value,
-                    level=program.level.value,
-                    degree_type=program.degree_type.value,
-                    faculty=program.faculty.value if program.faculty else None,
-                    discipline=program.discipline.value if program.discipline else None,
-                    code=program.code,
-                    url=program.url,
-                    description=program.description,
-                    credits_required=program.credits_required,
-                    duration_years=program.duration_years,
-                    is_offered=program.is_offered,
-                ))
+                program_responses.append(
+                    ProgramResponse(
+                        name=program.name,
+                        university=program.university.value,
+                        level=program.level.value,
+                        degree_type=program.degree_type.value,
+                        faculty=program.faculty.value if program.faculty else None,
+                        discipline=(
+                            program.discipline.value if program.discipline else None
+                        ),
+                        code=program.code,
+                        url=program.url,
+                        description=program.description,
+                        credits_required=program.credits_required,
+                        duration_years=program.duration_years,
+                        is_offered=program.is_offered,
+                    )
+                )
 
             return ProgramsResponse(
                 university=target_uni,
@@ -1207,7 +1282,10 @@ def create_app() -> FastAPI:
                 status_code=500, detail=f"Failed to get programs: {str(e)}"
             )
 
-    @app.get("/universities/{university}/programs/filters", response_model=ProgramFiltersResponse)
+    @app.get(
+        "/universities/{university}/programs/filters",
+        response_model=ProgramFiltersResponse,
+    )
     async def get_program_filters(university: str):
         """Get available filter options for programs."""
         target_uni = normalize_university(university)
@@ -1250,7 +1328,9 @@ def create_app() -> FastAPI:
     async def search_programs(
         university: str,
         q: str = Query(..., description="Search query for program name"),
-        limit: int = Query(20, description="Maximum number of programs to return", ge=1, le=100),
+        limit: int = Query(
+            20, description="Maximum number of programs to return", ge=1, le=100
+        ),
     ):
         """Search programs by name."""
         target_uni = normalize_university(university)
@@ -1275,7 +1355,7 @@ def create_app() -> FastAPI:
             # Get all programs and filter by search query
             all_programs = programs_provider.get_programs()
             query_lower = q.lower()
-            
+
             matching_programs = []
             for program in all_programs:
                 if query_lower in program.name.lower():
@@ -1286,20 +1366,24 @@ def create_app() -> FastAPI:
             # Convert to response model
             program_responses = []
             for program in matching_programs:
-                program_responses.append(ProgramResponse(
-                    name=program.name,
-                    university=program.university.value,
-                    level=program.level.value,
-                    degree_type=program.degree_type.value,
-                    faculty=program.faculty.value if program.faculty else None,
-                    discipline=program.discipline.value if program.discipline else None,
-                    code=program.code,
-                    url=program.url,
-                    description=program.description,
-                    credits_required=program.credits_required,
-                    duration_years=program.duration_years,
-                    is_offered=program.is_offered,
-                ))
+                program_responses.append(
+                    ProgramResponse(
+                        name=program.name,
+                        university=program.university.value,
+                        level=program.level.value,
+                        degree_type=program.degree_type.value,
+                        faculty=program.faculty.value if program.faculty else None,
+                        discipline=(
+                            program.discipline.value if program.discipline else None
+                        ),
+                        code=program.code,
+                        url=program.url,
+                        description=program.description,
+                        credits_required=program.credits_required,
+                        duration_years=program.duration_years,
+                        is_offered=program.is_offered,
+                    )
+                )
 
             return {
                 "university": target_uni,
@@ -1314,7 +1398,9 @@ def create_app() -> FastAPI:
                 status_code=500, detail=f"Failed to search programs: {str(e)}"
             )
 
-    @app.get("/universities/{university}/programs/export", response_model=BulkExportResponse)
+    @app.get(
+        "/universities/{university}/programs/export", response_model=BulkExportResponse
+    )
     async def export_all_programs(university: str):
         """Export all programs for a university in bulk format for external applications."""
         target_uni = normalize_university(university)
@@ -1346,15 +1432,15 @@ def create_app() -> FastAPI:
                     name="University of Ottawa",
                     code="uottawa",
                     country="Canada",
-                    province="Ontario"
+                    province="Ontario",
                 )
             else:  # carleton
                 university_data = BulkUniversityData(
                     id=2,
-                    name="Carleton University", 
+                    name="Carleton University",
                     code="carleton",
                     country="Canada",
-                    province="Ontario"
+                    province="Ontario",
                 )
 
             # Create faculty mapping and assign IDs
@@ -1364,14 +1450,14 @@ def create_app() -> FastAPI:
 
             # Get unique faculties from programs
             unique_faculties = programs_provider.get_unique_faculties()
-            
+
             for faculty_enum in unique_faculties:
                 faculty_data = BulkFacultyData(
                     id=faculty_id_counter,
                     university_id=university_data.id,  # Use the correct university ID
                     name=faculty_enum.value.replace("_", " ").title(),
                     code=faculty_enum.value.upper(),
-                    description=f"Faculty of {faculty_enum.value.replace('_', ' ').title()}"
+                    description=f"Faculty of {faculty_enum.value.replace('_', ' ').title()}",
                 )
                 faculties_data.append(faculty_data)
                 faculty_map[faculty_enum] = faculty_id_counter
@@ -1388,38 +1474,45 @@ def create_app() -> FastAPI:
                     faculty_id = faculty_map[program.faculty]
 
                 # Detect co-op requirement from program name
-                coop_required = any(keyword in program.name.lower() for keyword in ['co-op', 'coop', 'cooperative'])
+                coop_required = any(
+                    keyword in program.name.lower()
+                    for keyword in ["co-op", "coop", "cooperative"]
+                )
 
                 # Map degree type to Laravel format
                 degree_type_mapping = {
-                    'bachelor': 'Bachelor',
-                    'master': 'Master',
-                    'doctorate': 'Doctorate',
-                    'certificate': 'Certificate',
-                    'graduate_diploma': 'Graduate Diploma',
-                    'juris_doctor': 'Juris Doctor',
-                    'licentiate': 'Licentiate',
-                    'major': 'Major',
-                    'microprogram': 'Microprogram',
-                    'minor': 'Minor',
-                    'dual_degree': 'Dual Degree',
-                    'online': 'Online',
-                    'option': 'Option'
+                    "bachelor": "Bachelor",
+                    "master": "Master",
+                    "doctorate": "Doctorate",
+                    "certificate": "Certificate",
+                    "graduate_diploma": "Graduate Diploma",
+                    "juris_doctor": "Juris Doctor",
+                    "licentiate": "Licentiate",
+                    "major": "Major",
+                    "microprogram": "Microprogram",
+                    "minor": "Minor",
+                    "dual_degree": "Dual Degree",
+                    "online": "Online",
+                    "option": "Option",
                 }
-                
+
                 degree_type_display = degree_type_mapping.get(
                     program.degree_type.value.lower(),
-                    program.degree_type.value.replace('_', ' ').title()
+                    program.degree_type.value.replace("_", " ").title(),
                 )
 
                 program_data = BulkProgramData(
                     id=program_id_counter,
                     faculty_id=faculty_id,
                     name=program.name,
-                    code=program.code if program.code else f"PROG{program_id_counter:04d}",
+                    code=(
+                        program.code
+                        if program.code
+                        else f"PROG{program_id_counter:04d}"
+                    ),
                     coop_required=coop_required,
                     degree_type=degree_type_display,
-                    description=program.description
+                    description=program.description,
                 )
                 programs_data.append(program_data)
                 program_id_counter += 1
@@ -1436,15 +1529,15 @@ def create_app() -> FastAPI:
                     "This export is designed for Laravel application import",
                     "IDs are generated for relational consistency",
                     "Co-op requirement detected from program names",
-                    "Faculty assignments based on program metadata"
-                ]
+                    "Faculty assignments based on program metadata",
+                ],
             }
 
             return BulkExportResponse(
                 universities=[university_data],
                 faculties=faculties_data,
                 programs=programs_data,
-                metadata=metadata
+                metadata=metadata,
             )
 
         except Exception as e:

@@ -96,7 +96,7 @@ def main(argv=None):
             file=sys.stderr,
         )
 
-    print(f"Starting Schedulo API server...")
+    print("Starting Schedulo API server...")
     print(f"Available universities: {available_unis}")
     print(f"Server will be available at: http://{args.host}:{args.port}")
     print(f"API documentation: http://{args.host}:{args.port}/docs")

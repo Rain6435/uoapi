@@ -20,8 +20,6 @@ from uoapi.core.exceptions import (
 )
 
 
-
-
 class TestUOAPIError:
     """Tests for base UOAPIError exception."""
 

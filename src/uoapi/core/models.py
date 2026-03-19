@@ -39,6 +39,7 @@ class Subject(BaseModel):
 
 class ProgramType(str, Enum):
     """Types of academic programs."""
+
     UNDERGRADUATE = "undergraduate"
     GRADUATE = "graduate"
     DUAL_LEVEL = "dual_level"
@@ -46,6 +47,7 @@ class ProgramType(str, Enum):
 
 class ProgramDegreeType(str, Enum):
     """Types of degrees/credentials."""
+
     BACHELOR = "bachelor"
     CERTIFICATE = "certificate"
     DOCTORATE = "doctorate"
@@ -63,6 +65,7 @@ class ProgramDegreeType(str, Enum):
 
 class Faculty(str, Enum):
     """University faculties."""
+
     ARTS = "arts"
     EDUCATION = "education"
     ENGINEERING = "engineering"
@@ -76,6 +79,7 @@ class Faculty(str, Enum):
 
 class Discipline(str, Enum):
     """Academic disciplines."""
+
     # Popular disciplines - expand based on full list from programs page
     ACCOUNTING = "accounting"
     ADVANCED_MATERIALS_MANUFACTURING = "advanced_materials_manufacturing"
@@ -217,10 +221,18 @@ class Program(BaseModel):
     faculty: Optional[Faculty] = Field(None, description="Faculty offering the program")
     discipline: Optional[Discipline] = Field(None, description="Academic discipline")
     description: Optional[str] = Field(None, description="Program description")
-    credits_required: Optional[Union[int, float]] = Field(None, description="Credits required", ge=0)
-    duration_years: Optional[float] = Field(None, description="Typical duration in years", ge=0)
-    is_offered: bool = Field(default=True, description="Whether program is currently offered")
-    last_updated: Optional[datetime] = Field(None, description="When information was last updated")
+    credits_required: Optional[Union[int, float]] = Field(
+        None, description="Credits required", ge=0
+    )
+    duration_years: Optional[float] = Field(
+        None, description="Typical duration in years", ge=0
+    )
+    is_offered: bool = Field(
+        default=True, description="Whether program is currently offered"
+    )
+    last_updated: Optional[datetime] = Field(
+        None, description="When information was last updated"
+    )
 
 
 class MeetingTime(BaseModel):

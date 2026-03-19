@@ -13,7 +13,6 @@ import regex as re
 
 import uoapi.course.patterns as pt
 
-
 logging.getLogger(__name__)
 
 

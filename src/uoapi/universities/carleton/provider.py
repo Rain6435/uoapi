@@ -5,7 +5,7 @@ This module wraps the existing Carleton discovery functionality
 to implement the UniversityProvider interface.
 """
 
-from typing import List, Optional, Tuple, Dict, Any
+from typing import List, Optional, Tuple
 import logging
 import time
 from datetime import datetime
@@ -16,18 +16,14 @@ from uoapi.core import (
     Course,
     CourseSection,
     MeetingTime,
-    SearchResult,
     DiscoveryResult,
-    ProviderError,
-    DataSourceError,
-    NetworkError,
-    LiveDataNotSupportedError,
+    DataSourceError,  # noqa: F401
 )
 from uoapi.universities.base import BaseUniversityProvider
 
 # Import existing Carleton functionality
 from uoapi.carleton.discovery import CarletonDiscovery
-from uoapi.carleton.models import (
+from uoapi.carleton.models import (  # noqa: F401
     Course as OldCourse,
     CourseSection as OldSection,
     MeetingTime as OldMeetingTime,
@@ -54,7 +50,7 @@ class CarletonProvider(BaseUniversityProvider):
         )
         self._catalog_data = None
         self._subjects_from_catalog = None
-        
+
         # Initialize programs provider
         self._programs_provider = CarletonProgramsProvider()
 
@@ -198,7 +194,9 @@ class CarletonProvider(BaseUniversityProvider):
                     )
                     courses.append(course)
                 except Exception as e:
-                    logger.warning(f"Failed to create course object for {course_code}: {e}")
+                    logger.warning(
+                        f"Failed to create course object for {course_code}: {e}"
+                    )
                     continue
 
         logger.info(f"Loaded {len(courses)} courses from Carleton catalog")
@@ -312,20 +310,18 @@ class CarletonProvider(BaseUniversityProvider):
             raise DataSourceError(f"Failed to discover courses from Carleton: {str(e)}")
 
     def discover_single_course(
-        self, 
-        term_code: str, 
-        course_code: str
+        self, term_code: str, course_code: str
     ) -> Optional[Course]:
         """
         Discover live data for a single specific course.
-        
+
         This method directly queries Carleton Banner for a specific course
         without going through the bulk discovery process.
-        
+
         Args:
             term_code: Term identifier (e.g., "202530")
             course_code: Full course code (e.g., "COMP1005")
-            
+
         Returns:
             Course object with live sections if found, None otherwise
         """
@@ -333,9 +329,11 @@ class CarletonProvider(BaseUniversityProvider):
             # Extract subject and course number
             subject_code = self._extract_subject_code(course_code)
             course_number = self._extract_course_number(course_code)
-            
-            logger.info(f"Searching for single course: {course_code} ({subject_code} {course_number})")
-            
+
+            logger.info(
+                f"Searching for single course: {course_code} ({subject_code} {course_number})"
+            )
+
             # Get available terms to validate session_id
             available_terms = self._discovery.get_available_terms()
             session_id = None
@@ -344,11 +342,11 @@ class CarletonProvider(BaseUniversityProvider):
                     # For Carleton, session_id is typically the same as term_code
                     session_id = code
                     break
-            
+
             if not session_id:
                 logger.error(f"Term {term_code} not found in available terms")
                 return None
-            
+
             # Use the direct search_course method
             old_course = self._discovery.search_course(
                 term_code=term_code,
@@ -356,16 +354,16 @@ class CarletonProvider(BaseUniversityProvider):
                 subject_code=subject_code,
                 course_number=course_number,
                 course_title="",  # Let Banner search by code
-                course_credits=0.0
+                course_credits=0.0,
             )
-            
+
             if old_course:
                 # Convert to new format
                 return self._convert_old_course_to_new(old_course)
-            
+
             logger.info(f"Course {course_code} not found for term {term_code}")
             return None
-            
+
         except Exception as e:
             logger.error(f"Failed to discover single course {course_code}: {e}")
             raise DataSourceError(f"Failed to discover course {course_code}: {str(e)}")

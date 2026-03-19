@@ -12,7 +12,7 @@ from uoapi.core import (
     TimetableService,
     University,
     DiscoveryResult,
-    UniversityNotSupportedError,
+    UniversityNotSupportedError,  # noqa: F401
     TermNotAvailableError,
     LiveDataNotSupportedError,
     ServiceError,

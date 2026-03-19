@@ -13,8 +13,6 @@ from uoapi.core.exceptions import (
 from uoapi.services.course_service import DefaultCourseService
 
 
-
-
 @pytest.fixture
 def mock_carleton_provider():
     """Create mock Carleton provider."""
@@ -111,8 +109,16 @@ def mock_uottawa_provider():
 @pytest.fixture
 def service_with_mocked_providers(mock_carleton_provider, mock_uottawa_provider):
     """Create service with mocked providers."""
-    with patch("uoapi.services.course_service.CarletonProvider", return_value=mock_carleton_provider), \
-         patch("uoapi.services.course_service.UOttawaProvider", return_value=mock_uottawa_provider):
+    with (
+        patch(
+            "uoapi.services.course_service.CarletonProvider",
+            return_value=mock_carleton_provider,
+        ),
+        patch(
+            "uoapi.services.course_service.UOttawaProvider",
+            return_value=mock_uottawa_provider,
+        ),
+    ):
         service = DefaultCourseService()
     return service, mock_carleton_provider, mock_uottawa_provider
 

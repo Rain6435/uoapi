@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import logging
 
-from uoapi.core import (
+from uoapi.core import (  # noqa: F401
     University,
     UniversityNotSupportedError,
     ServiceError,

@@ -8,7 +8,6 @@ and provides filtering capabilities similar to the web interface.
 import requests
 from bs4 import BeautifulSoup
 from typing import List, Optional, Dict, Any, Set
-import re
 import logging
 from enum import Enum
 
@@ -19,15 +18,19 @@ from uoapi.core import (
 
 logger = logging.getLogger(__name__)
 
+
 # Program-related data models
 class ProgramType(str, Enum):
     """Types of academic programs."""
+
     UNDERGRADUATE = "undergraduate"
     GRADUATE = "graduate"
     DUAL_LEVEL = "dual_level"
 
+
 class ProgramDegreeType(str, Enum):
     """Types of degrees/credentials."""
+
     BACHELOR = "bachelor"
     CERTIFICATE = "certificate"
     DOCTORATE = "doctorate"
@@ -42,8 +45,10 @@ class ProgramDegreeType(str, Enum):
     ONLINE = "online"
     OPTION = "option"
 
+
 class Faculty(str, Enum):
     """University faculties."""
+
     ARTS = "arts"
     EDUCATION = "education"
     ENGINEERING = "engineering"
@@ -54,8 +59,10 @@ class Faculty(str, Enum):
     SCIENCE = "science"
     SOCIAL_SCIENCES = "social_sciences"
 
+
 class Discipline(str, Enum):
     """Academic disciplines."""
+
     # Popular disciplines - expand based on full list from programs page
     ACCOUNTING = "accounting"
     ADVANCED_MATERIALS_MANUFACTURING = "advanced_materials_manufacturing"
@@ -167,9 +174,10 @@ class Discipline(str, Enum):
     WORLD_CINEMAS = "world_cinemas"
     WRITING = "writing"
 
+
 class Program:
     """Represents an academic program at a university."""
-    
+
     def __init__(
         self,
         name: str,
@@ -198,13 +206,13 @@ class Program:
         self.duration_years = duration_years
         self.is_offered = is_offered
 
+
 # Filter mapping from HTML filter IDs to enums
 FILTER_MAPPINGS = {
     # Level filters
     "filter_19": ProgramType.UNDERGRADUATE,
     "filter_20": ProgramType.GRADUATE,
     "filter_185": ProgramType.DUAL_LEVEL,
-    
     # Degree type filters
     "filter_21": ProgramDegreeType.BACHELOR,
     "filter_23": ProgramDegreeType.CERTIFICATE,
@@ -219,7 +227,6 @@ FILTER_MAPPINGS = {
     "filter_22": ProgramDegreeType.MINOR,
     "filter_172": ProgramDegreeType.ONLINE,
     "filter_170": ProgramDegreeType.OPTION,
-    
     # Faculty filters
     "filter_27": Faculty.ARTS,
     "filter_35": Faculty.EDUCATION,
@@ -230,7 +237,6 @@ FILTER_MAPPINGS = {
     "filter_36": Faculty.MEDICINE,
     "filter_28": Faculty.SCIENCE,
     "filter_31": Faculty.SOCIAL_SCIENCES,
-    
     # Sample discipline mappings (expand as needed)
     "filter_62": Discipline.ACCOUNTING,
     "filter_184": Discipline.ADVANCED_MATERIALS_MANUFACTURING,
@@ -340,30 +346,31 @@ FILTER_MAPPINGS = {
     "filter_153": Discipline.STATISTICS,
     "filter_156": Discipline.THEATRE,
     "filter_168": Discipline.VISUAL_ARTS,
-    "filter_58": Discipline.WORLD_CINEMAS,
+    "filter_169": Discipline.WORLD_CINEMAS,
     "filter_129": Discipline.WRITING,
 }
 
+
 class UOttawaProgramsProvider:
     """Provider for UOttawa academic programs data."""
-    
+
     def __init__(self):
         self.programs_url = "https://catalogue.uottawa.ca/en/programs/"
         self._programs_cache: Optional[List[Program]] = None
         self._filter_mappings_cache: Optional[Dict[str, Any]] = None
-    
+
     def _scrape_programs(self) -> List[Program]:
         """Scrape programs data from the UOttawa website."""
         try:
             response = requests.get(self.programs_url, timeout=30)
             response.raise_for_status()
-            
+
             soup = BeautifulSoup(response.text, "html.parser")
             programs = []
-            
+
             # Find all program items
             program_items = soup.find_all("li", class_="item")
-            
+
             for item in program_items:
                 try:
                     program = self._parse_program_item(item)
@@ -372,45 +379,45 @@ class UOttawaProgramsProvider:
                 except Exception as e:
                     logger.warning(f"Failed to parse program item: {e}")
                     continue
-            
+
             logger.info(f"Scraped {len(programs)} programs from UOttawa")
             return programs
-            
+
         except Exception as e:
             logger.error(f"Failed to scrape programs: {e}")
             raise ProviderError(f"Failed to retrieve programs from UOttawa: {str(e)}")
-    
+
     def _parse_program_item(self, item) -> Optional[Program]:
         """Parse a single program item from HTML."""
         # Extract program name and URL
         link_tag = item.find("a")
         if not link_tag:
             return None
-            
+
         title_span = link_tag.find("span", class_="title")
         if not title_span:
             return None
-            
+
         program_name = title_span.get_text().strip()
         program_url = link_tag.get("href")
         if program_url and not program_url.startswith("http"):
             program_url = f"https://catalogue.uottawa.ca{program_url}"
-        
+
         # Extract filter classes
         class_attr = item.get("class", [])
         filter_classes = [cls for cls in class_attr if cls.startswith("filter_")]
-        
+
         # Map filters to program attributes
         level = ProgramType.UNDERGRADUATE  # Default assumption
         degree_type = ProgramDegreeType.BACHELOR  # Default assumption
         faculty = None
         discipline = None
-        
+
         # Process filters to determine program characteristics
         for filter_class in filter_classes:
             if filter_class in FILTER_MAPPINGS:
                 mapped_value = FILTER_MAPPINGS[filter_class]
-                
+
                 # Determine which attribute this maps to based on type
                 if isinstance(mapped_value, ProgramType):
                     level = mapped_value
@@ -420,7 +427,7 @@ class UOttawaProgramsProvider:
                     faculty = mapped_value
                 elif isinstance(mapped_value, Discipline):
                     discipline = mapped_value
-        
+
         return Program(
             name=program_name,
             url=program_url,
@@ -431,15 +438,15 @@ class UOttawaProgramsProvider:
             discipline=discipline,
             is_offered=True,
         )
-    
+
     def get_programs(self) -> List[Program]:
         """Get all programs (cached)."""
         if self._programs_cache:
             return self._programs_cache
-            
+
         self._programs_cache = self._scrape_programs()
         return self._programs_cache
-    
+
     def get_programs_by_filters(
         self,
         level: Optional[ProgramType] = None,
@@ -450,7 +457,7 @@ class UOttawaProgramsProvider:
         """Get programs filtered by criteria."""
         all_programs = self.get_programs()
         filtered_programs = []
-        
+
         for program in all_programs:
             # Apply filters
             if level and program.level != level:
@@ -461,42 +468,42 @@ class UOttawaProgramsProvider:
                 continue
             if discipline and program.discipline != discipline:
                 continue
-                
+
             filtered_programs.append(program)
-        
+
         return filtered_programs
-    
+
     def get_program_by_name(self, name: str) -> Optional[Program]:
         """Get a specific program by name."""
         all_programs = self.get_programs()
-        
+
         # Normalize name for comparison
         normalized_name = name.lower().strip()
-        
+
         for program in all_programs:
             if normalized_name in program.name.lower():
                 return program
-                
+
         return None
-    
+
     def get_unique_faculties(self) -> List[Faculty]:
         """Get list of unique faculties."""
         programs = self.get_programs()
         faculties: Set[Faculty] = set()
-        
+
         for program in programs:
             if program.faculty:
                 faculties.add(program.faculty)
-                
+
         return sorted(list(faculties), key=lambda f: f.value)
-    
+
     def get_unique_disciplines(self) -> List[Discipline]:
         """Get list of unique disciplines."""
         programs = self.get_programs()
         disciplines: Set[Discipline] = set()
-        
+
         for program in programs:
             if program.discipline:
                 disciplines.add(program.discipline)
-                
+
         return sorted(list(disciplines), key=lambda d: d.value)

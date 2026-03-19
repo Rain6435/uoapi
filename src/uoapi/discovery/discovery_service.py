@@ -3,7 +3,6 @@ Discovery service for loading and serving course data from assets files.
 """
 
 import json
-import os
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
@@ -181,7 +180,7 @@ def get_course_count(university: str) -> int:
             return total
         else:
             return 0
-    except:
+    except Exception:  # noqa: E722
         return 0
 
 
@@ -202,7 +201,7 @@ def get_subjects_list(university: str) -> List[str]:
             ]
         else:
             return []
-    except:
+    except Exception:  # noqa: E722
         return []
 
 

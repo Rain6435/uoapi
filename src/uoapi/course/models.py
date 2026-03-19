@@ -5,7 +5,7 @@ This module defines Pydantic models for representing course data,
 subjects, prerequisites, and components from the University of Ottawa.
 """
 
-from typing import List, Optional, Union
+from typing import List, Optional
 from pydantic import (
     BaseModel,
     HttpUrl,
@@ -48,7 +48,9 @@ class Course(BaseModel):
     description: str = Field(..., description="Course description")
     components: List[str] = Field(default_factory=list, description="Course components")
     prerequisites: str = Field(default="", description="Prerequisites text")
-    raw_prerequisites: str = Field(default="", description="Raw prerequisites text from website")
+    raw_prerequisites: str = Field(
+        default="", description="Raw prerequisites text from website"
+    )
     dependencies: List[List[str]] = Field(
         default_factory=list, description="Parsed dependencies"
     )

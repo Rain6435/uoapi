@@ -6,8 +6,6 @@ from unittest.mock import patch
 from uoapi.utils.config import get_config, reload_config
 
 
-
-
 class TestGetConfig:
     """Tests for get_config function."""
 

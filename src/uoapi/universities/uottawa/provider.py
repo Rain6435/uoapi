@@ -16,17 +16,14 @@ from uoapi.core import (
     Course,
     CourseSection,
     MeetingTime,
-    SearchResult,
     DiscoveryResult,
-    ProviderError,
-    DataSourceError,
-    NetworkError,
+    DataSourceError,  # noqa: F401
 )
 from uoapi.universities.base import BaseUniversityProvider
 
 # Import existing functionality
 from uoapi.course.course_info import scrape_subjects, get_courses
-from uoapi.course.models import Subject as OldSubject, Course as OldCourse
+from uoapi.course.models import Subject as OldSubject, Course as OldCourse  # noqa: F401
 
 # Import for catalog data loading
 from uoapi.discovery.discovery_service import get_courses_data
@@ -56,7 +53,7 @@ class UOttawaProvider(BaseUniversityProvider):
         super().__init__()
         self._base_url = "https://catalogue.uottawa.ca/en/courses/"
         self._timetable_query = None
-        
+
         # Initialize programs provider
         self._programs_provider = UOttawaProgramsProvider()
 
@@ -148,16 +145,16 @@ class UOttawaProvider(BaseUniversityProvider):
             # Load catalog data using discovery service
             catalog_data = get_courses_data("uottawa")
             departments = catalog_data.get("departments", {})
-            
+
             courses = []
             for dept_name, dept_info in departments.items():
                 dept_code = dept_info.get("department_code", "")
                 dept_courses = dept_info.get("courses", [])
-                
+
                 for course_data in dept_courses:
                     try:
                         course_code = f"{course_data.get('subject_code', dept_code)} {course_data.get('course_code', '')}"
-                        
+
                         # Handle prerequisites - can be list or nested object
                         prereqs = course_data.get("prerequisites", [])
                         prerequisite_courses = []
@@ -168,12 +165,16 @@ class UOttawaProvider(BaseUniversityProvider):
                             # Complex format: {"prerequisites": {"required": [{"course": "..."}]}}
                             nested_prereqs = prereqs.get("prerequisites", {})
                             required = nested_prereqs.get("required", [])
-                            prerequisite_courses = [item.get("course", "") for item in required if isinstance(item, dict) and "course" in item]
-                        
+                            prerequisite_courses = [
+                                item.get("course", "")
+                                for item in required
+                                if isinstance(item, dict) and "course" in item
+                            ]
+
                         course = Course(
                             course_code=self._normalize_course_code(course_code),
-                            subject_code=course_data.get('subject_code', dept_code),
-                            course_number=course_data.get('course_code', ''),
+                            subject_code=course_data.get("subject_code", dept_code),
+                            course_number=course_data.get("course_code", ""),
                             title=course_data.get("title", ""),
                             description=course_data.get("description", ""),
                             credits=course_data.get("credits", "0"),
@@ -186,12 +187,14 @@ class UOttawaProvider(BaseUniversityProvider):
                         )
                         courses.append(course)
                     except Exception as e:
-                        logger.warning(f"Failed to create course object for {course_code}: {e}")
+                        logger.warning(
+                            f"Failed to create course object for {course_code}: {e}"
+                        )
                         continue
-            
+
             logger.info(f"Loaded {len(courses)} courses from UOttawa catalog")
             return courses
-            
+
         except Exception as e:
             logger.error(f"Failed to load catalog data: {e}")
             # Fall back to scraping if catalog loading fails
@@ -494,7 +497,9 @@ class UOttawaProvider(BaseUniversityProvider):
             try:
                 # Each section_data can contain multiple components (LEC, LAB, TUT)
                 # We need to create a separate CourseSection for each component
-                component_sections = self._convert_timetable_section_to_new(section_data)
+                component_sections = self._convert_timetable_section_to_new(
+                    section_data
+                )
                 sections.extend(component_sections)
             except Exception as e:
                 logger.warning(
@@ -531,7 +536,7 @@ class UOttawaProvider(BaseUniversityProvider):
     ) -> List[CourseSection]:
         """
         Convert timetable section data to unified CourseSection models.
-        
+
         Each component (LEC, LAB, TUT) becomes a separate CourseSection.
 
         Args:
@@ -545,27 +550,27 @@ class UOttawaProvider(BaseUniversityProvider):
         components = section_data.get("components", [])
 
         sections = []
-        
+
         # Create a separate section for each component
         for component in components:
             try:
                 # Extract component information
                 component_type = component.get("type", "Lecture")
                 section_id = component.get("section_id", "")
-                
+
                 # Generate a unique section identifier combining base section and component
                 # e.g., "A00" for LEC, "A01" for LAB, etc.
                 full_section_id = section_id if section_id else label
-                
+
                 # Extract CRN (use component-specific if available)
                 crn = component.get("crn", f"{label.replace(' ', '')}")
-                
+
                 # Extract status
                 status = component.get("status", "Unknown")
-                
+
                 # Extract instructor
                 instructor = component.get("instructor", "TBA")
-                
+
                 # Create single meeting time for this component
                 meeting_time = MeetingTime(
                     start_date=component.get("start_date", ""),
@@ -574,13 +579,13 @@ class UOttawaProvider(BaseUniversityProvider):
                     start_time=component.get("start_time", ""),
                     end_time=component.get("end_time", ""),
                 )
-                
+
                 # Extract notes
                 notes = []
                 description = component.get("description", "")
                 if description:
                     notes.append(description)
-                
+
                 section = CourseSection(
                     crn=crn,
                     section=full_section_id,
@@ -595,9 +600,9 @@ class UOttawaProvider(BaseUniversityProvider):
                     remaining=None,
                 )
                 sections.append(section)
-                
+
             except Exception as e:
                 logger.warning(f"Failed to convert component in {label}: {e}")
                 continue
-        
+
         return sections

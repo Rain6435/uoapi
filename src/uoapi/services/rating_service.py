@@ -12,8 +12,7 @@ from uoapi.core import (
     RatingService,
     University,
     Course,
-    ServiceError,
-)
+)  # noqa: F401
 
 logger = logging.getLogger(__name__)
 

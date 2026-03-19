@@ -10,11 +10,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 # Mock problematic legacy modules BEFORE importing anything from uoapi
 # These modules don't exist in the REST API architecture but are needed by legacy tests
 removed_modules = [
-    'uoapi.course.cli',
-    'uoapi.carleton.cli',
-    'uoapi.discovery.cli',
-    'uoapi.server.cli',
-    'uoapi.timetable.cli',
+    "uoapi.course.cli",
+    "uoapi.carleton.cli",
+    "uoapi.discovery.cli",
+    "uoapi.server.cli",
+    "uoapi.timetable.cli",
 ]
 
 for module in removed_modules:
